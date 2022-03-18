@@ -1,0 +1,8 @@
+name = "GlacioTools"
+uuid = "f6e1814d-c37d-4673-9f0b-038c7b842264"
+authors = ["pohlan <apohle@ethz.ch>"]
+version = "0.1.0"
+
+[deps]
+Downloads = "f43a241f-c20a-4ad4-852c-f6b1247861c6"
+GeoData = "9b6fcbb8-86d6-11e9-1ce7-23a6bb139a78"
