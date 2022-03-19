@@ -39,6 +39,27 @@ function download_data(url::String, destination_dir::String;
 end
 
 """
+    preproc_data(fl, destination_dir)
+Unpack downloaded .zip, .gz or .tar files
+"""
+function preproc_data(fl, destination_dir)
+    if splitext(fl)[2]==".zip"
+        cd(destination_dir) do
+            run(`unzip -ou $fl`)
+        end
+    elseif splitext(fl)[2]==".gz"
+        @assert splitext(splitext(fl)[1])[2]==".tar"
+        cd(destination_dir) do
+            run(`tar xzf $fl`)
+        end
+    elseif splitext(fl)[2]==".tar"
+        cd(destination_dir) do
+            run(`tar xf $fl`)
+        end
+    end
+end
+
+"""
     get_all_data(datas::Dict, destionation_dir::String;
                     force_download=false)
 Downloads all files in a dictionary using `download_data`.

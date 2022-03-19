@@ -11,7 +11,8 @@ const g    = 9.81
 const day = 24*60*60
 const year = 365*day
 
-include("downloading.jl")
+include("downloading_helpers.jl")
 include("GeoData_helpers.jl")
+include("Antarctica.jl")
 
 end # module

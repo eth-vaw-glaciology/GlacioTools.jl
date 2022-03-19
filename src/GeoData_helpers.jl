@@ -3,6 +3,11 @@ get_dy(ga::Union{GeoArray,GeoStack}) = diff(val(dims(ga)[2])[1:2])[1]
 get_x(ga::Union{GeoArray,GeoStack})  = val(dims(ga)[1])
 get_y(ga::Union{GeoArray,GeoStack})  = val(dims(ga)[2])
 
+"""
+    Box(x::Tuple, y::Tuple)
+Get an array that can be used to crop a GeoArray to specified x and y coordinate ranges.
+"""
+Box(x::Tuple, y::Tuple) = (X(Between(x[1],x[2])), Y(Between(y[1],y[2])))
 
 """
     missing2nan(ar, T=Float32)
