@@ -1,6 +1,6 @@
 module GlacioTools
 
-using Downloads, GeoData, Printf
+using Downloads, Rasters, Printf
 
 export get_all_data
 
