@@ -1,7 +1,12 @@
 # GlacioTools.jl
 
-## done already
-- general download routines (from `FourDAntarcticaSubglacialRouting.jl`)
+## Done already
+General downloading routine `get_all_data()` (from `FourDAntarcticaSubglacialRouting.jl`) which can be used in three ways
+```
+get_all_data(myfile, destination_dir)
+get_all_data(myfolder, destination_dir)
+get_all_data(mydictionary, destination_dir)
+```
 
 ## TODO
 - download and read in Antarctica data (from `FourDAntarcticaSubglacialRouting.jl`)

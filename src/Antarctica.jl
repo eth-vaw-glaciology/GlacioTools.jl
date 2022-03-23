@@ -1,5 +1,6 @@
 # FUNCTIONS TO DOWNLOAD AND READ IN ANTARCTICA DATA
 
+const box_antarctica = Box((-2750000, 2780000+1), (-2200000, 2300000+1))
 
 # Note: To download the data the ISG shares need to be mounted (as described here https://vawiki.ethz.ch/vaw/informatics:samba_for_linux?s[]=samba
 function something_Antarctica(spec=nothing;
@@ -42,6 +43,7 @@ function something_Antarctica(spec=nothing;
     if haskey(datas, :bedmap2)
         topo = AIS_bedmap2()
     end
+    return topo, nc
 end
 
 

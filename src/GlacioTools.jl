@@ -1,8 +1,8 @@
 module GlacioTools
 
-using Downloads, GeoData
+using Downloads, GeoData, Printf
 
-export download_data, get_all_data
+export get_all_data
 
 # define some useful constants -- or is this more annoying than useful?
 const rhoi = 917

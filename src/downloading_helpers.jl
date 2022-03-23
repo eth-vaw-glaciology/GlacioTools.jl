@@ -1,5 +1,5 @@
 """
-    download_data(url, destination_dir;
+    download_file(url, destination_dir;
                     force_download=false,
                     filename=nothing)
 Download a file, if it has not been downloaded already.  Uses wget, which needs to64
@@ -14,7 +14,7 @@ Kwargs:
 Output:
 - destination_file -- file name (including relative path)
 """
-function download_data(url::String, destination_dir::String;
+function download_file(url::String, destination_dir::String;
                         force_download=false,
                         filename=nothing)
     mkpath(destination_dir)
@@ -60,12 +60,12 @@ function preproc_data(fl, destination_dir)
 end
 
 """
-    get_all_data(datas::Dict, destionation_dir::String;
+    get_all_data(datas, destionation_dir::String;
                     force_download=false)
-Downloads all files in a dictionary using `download_data`.
+Downloads all files in a directory or dictionary.
 
 Input:
-- datas -- dictionary of files that need to be downloaded
+- datas -- collection of files that need to be downloaded; can be a dictionary, a folder or just the path of a single file.
 - destionation_dir -- path of the directory to store the download
 Kwargs:
 - force_download -- force the download, even if file is present
@@ -76,7 +76,7 @@ function get_all_data(datas::Dict, destionation_dir::String;
         print("Downloading $k... ")
         if d isa AbstractString
             try
-                fl = download_data(d, destionation_dir; force_download)
+                fl = download_file(d, destionation_dir; force_download)
                 preproc_data(fl, destionation_dir)
             catch e
                 println(" ... error: $e")
@@ -84,12 +84,31 @@ function get_all_data(datas::Dict, destionation_dir::String;
         else
             for dd in d
                 try
-                    fl = download_data(dd, destionation_dir; force_download)
+                    fl = download_file(dd, destionation_dir; force_download)
                     preproc_data(fl, destionation_dir)
                 catch e
                     println(" ... error: $e")
                 end
             end
+        end
+        println("done.")
+    end
+    nothing
+end
+function get_all_data(datas::String, destionation_dir::String;
+                        force_download=false)
+    if isdir(datas)
+        d = readdir(datas, join=true)
+    elseif isfile(datas)
+        d = [datas]
+    end
+    for (k, di) in enumerate(d)
+        @printf("Downloading file %d out of %d... ", k, length(d))
+        try
+            fl = download_file("file://" * di, destionation_dir; force_download)
+            preproc_data(fl, destionation_dir)
+        catch e
+            println(" ... error: $e")
         end
         println("done.")
     end
