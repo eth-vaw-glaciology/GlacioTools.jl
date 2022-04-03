@@ -44,18 +44,12 @@ Unpack downloaded .zip, .gz or .tar files
 """
 function preproc_data(fl, destination_dir)
     if splitext(fl)[2]==".zip"
-        cd(destination_dir) do
-            run(`unzip -ou $fl`)
-        end
+        run(`unzip -ou $fl -d $destination_dir`)
     elseif splitext(fl)[2]==".gz"
         @assert splitext(splitext(fl)[1])[2]==".tar"
-        cd(destination_dir) do
-            run(`tar xzf $fl`)
-        end
+        run(`tar xzf $fl`)
     elseif splitext(fl)[2]==".tar"
-        cd(destination_dir) do
-            run(`tar xf $fl`)
-        end
+        run(`tar xf $fl`)
     end
 end
 

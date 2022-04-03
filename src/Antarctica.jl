@@ -40,10 +40,10 @@ function something_Antarctica(spec=nothing;
     output = Dict()
     if haskey(datas, :bedmachine)
         topo, nc = AIS_bedmachine(destination_dir, bedmachine_thin)
-        output[:bedmachine] = topo, nc
+        output[:bedmachine] = Dict(:topo => topo, :nc => nc)
     end
     if haskey(datas, :bedmap2)
-        topo = AIS_bedmap2()
+        topo = AIS_bedmap2(destination_dir)
         output[:bedmap2] = topo
     end
     return output
@@ -85,7 +85,7 @@ function AIS_bedmachine(datadir, thin=1)
 #    return RasterStack(gas..., metadata=nc.metadata), nc
 end
 
-# function AIS_bedmap2()
+# function AIS_bedmap2(datadir)
 #     fls = Dict(:bed => datadir*"/bedmap2_tiff/bedmap2_bed.tif",
 #                :surface => datadir*"/bedmap2_tiff/bedmap2_surface.tif")
 
