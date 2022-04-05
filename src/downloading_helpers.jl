@@ -18,15 +18,17 @@ function download_file(url::String, destination_dir::String;
                         force_download=false,
                         filename=nothing)
     mkpath(destination_dir)
-    destination_file = if filename === nothing
+    destination_file = if filename === nothing && splitext(url)[2] == ".zip"
+        joinpath(destination_dir, splitext(basename(url))[1])
+    elseif filename === nothing
         joinpath(destination_dir, basename(url))
     else
         joinpath(destination_dir, filename)
     end
-    if isfile(destination_file) && !force_download
+    if (isdir(destination_file) || isfile(destination_file)) && !force_download
         # do nothing
         return destination_file
-    elseif isfile(destination_file)
+    elseif isdir(destination_file) || isfile(destination_file)
         rm(destination_file)
     end
     if startswith(url, "file://")
@@ -41,10 +43,13 @@ end
 """
     preproc_data(fl, destination_dir)
 Unpack downloaded .zip, .gz or .tar files
+
+TODO: .gz and .tar files?
 """
 function preproc_data(fl, destination_dir)
     if splitext(fl)[2]==".zip"
         run(`unzip -ou $fl -d $destination_dir`)
+        run(`rm $fl`)
     elseif splitext(fl)[2]==".gz"
         @assert splitext(splitext(fl)[1])[2]==".tar"
         run(`tar xzf $fl`)
@@ -54,32 +59,32 @@ function preproc_data(fl, destination_dir)
 end
 
 """
-    get_all_data(datas, destionation_dir::String;
+    get_all_data(datas, destination_dir::String;
                     force_download=false)
 Downloads all files in a directory or dictionary.
 
 Input:
 - datas -- collection of files that need to be downloaded; can be a dictionary, a folder or just the path of a single file.
-- destionation_dir -- path of the directory to store the download
+- destination_dir -- path of the directory to store the download
 Kwargs:
 - force_download -- force the download, even if file is present
 """
-function get_all_data(datas::Dict, destionation_dir::String;
+function get_all_data(datas::Dict, destination_dir::String;
                         force_download=false)
     for (k,d) in datas
         print("Downloading $k... ")
         if d isa AbstractString
             try
-                fl = download_file(d, destionation_dir; force_download)
-                preproc_data(fl, destionation_dir)
+                fl = download_file(d, destination_dir; force_download)
+                preproc_data(fl, destination_dir)
             catch e
                 println(" ... error: $e")
             end
         else
             for dd in d
                 try
-                    fl = download_file(dd, destionation_dir; force_download)
-                    preproc_data(fl, destionation_dir)
+                    fl = download_file(dd, destination_dir; force_download)
+                    preproc_data(fl, destination_dir)
                 catch e
                     println(" ... error: $e")
                 end
@@ -89,7 +94,7 @@ function get_all_data(datas::Dict, destionation_dir::String;
     end
     nothing
 end
-function get_all_data(datas::String, destionation_dir::String;
+function get_all_data(datas::String, destination_dir::String;
                         force_download=false)
     if isdir(datas)
         d = readdir(datas, join=true)
@@ -99,8 +104,8 @@ function get_all_data(datas::String, destionation_dir::String;
     for (k, di) in enumerate(d)
         @printf("Downloading file %d out of %d... ", k, length(d))
         try
-            fl = download_file("file://" * di, destionation_dir; force_download)
-            preproc_data(fl, destionation_dir)
+            fl = download_file("file://" * di, destination_dir; force_download)
+            preproc_data(fl, destination_dir)
         catch e
             println(" ... error: $e")
         end

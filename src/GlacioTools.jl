@@ -1,8 +1,8 @@
 module GlacioTools
-using Revise  # for developing
+using Revise, Infiltrator  # for developing
 using Downloads, Rasters, Printf
 
-export get_all_data
+export get_all_data, fetch_Antarctica
 
 # define some useful constants -- or is this more annoying than useful?
 const rhoi = 917

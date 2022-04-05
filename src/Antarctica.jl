@@ -3,7 +3,7 @@
 const box_antarctica = Box((-2750000, 2780000+1), (-2200000, 2300000+1))
 
 # Note: To download the data the ISG shares need to be mounted (as described here https://vawiki.ethz.ch/vaw/informatics:samba_for_linux?s[]=samba
-function something_Antarctica(spec=nothing;
+function fetch_Antarctica(spec=nothing;
                                 destination_dir="data/Antarctica/",
                                 bedmachine_thin=1)
     vaw_url = "https://people.ee.ethz.ch/~werderm/4d-data-9xWArBUYVr/"
@@ -39,17 +39,17 @@ function something_Antarctica(spec=nothing;
     # reading
     output = Dict()
     if haskey(datas, :bedmachine)
-        topo, nc = AIS_bedmachine(destination_dir, bedmachine_thin)
+        topo, nc = read_bedmachine(destination_dir, bedmachine_thin)
         output[:bedmachine] = Dict(:topo => topo, :nc => nc)
     end
     if haskey(datas, :bedmap2)
-        topo = AIS_bedmap2(destination_dir)
+        topo = read_bedmap2(destination_dir)
         output[:bedmap2] = topo
     end
     return output
 end
 
-function AIS_bedmachine(datadir, thin=1)
+function read_bedmachine(datadir, thin=1)
     nc = NCDstack(datadir * "/BedMachineAntarctica_2020-07-15_v02.nc") # this doesn't do anything: , childkwargs=(crs=crs,))
     # read arrays into memory and thin them, if desired
     gas = []
@@ -85,29 +85,29 @@ function AIS_bedmachine(datadir, thin=1)
 #    return RasterStack(gas..., metadata=nc.metadata), nc
 end
 
-# function AIS_bedmap2(datadir)
-#     fls = Dict(:bed => datadir*"/bedmap2_tiff/bedmap2_bed.tif",
-#                :surface => datadir*"/bedmap2_tiff/bedmap2_surface.tif")
+function read_bedmap2(datadir)
+    fls = Dict(:bed => datadir*"/bedmap2_tiff/bedmap2_bed.tif",
+               :surface => datadir*"/bedmap2_tiff/bedmap2_surface.tif")
 
-#     ga = Any[k=>missing2nan(Raster.(v)[:,end:-1:1,1]) for (k,v) in fls]
+    ga = Any[k=>missing2nan(Raster.(v)[:,end:-1:1,1]) for (k,v) in fls]
 
-#     errbed = Raster(datadir*"/bedmap2_tiff/bedmap2_grounded_bed_uncertainty.tif", missingval=typemax(UInt16))[:,end:-1:1,1]
-#     push!(ga, :errbed => missing2nan(errbed))
-#     rmask = Raster(datadir*"/bedmap2_tiff/bedmap2_icemask_grounded_and_shelves.tif")[:,end:-1:1,1].==0
-#     push!(ga, :rmask=>rmask)
+    errbed = Raster(datadir*"/bedmap2_tiff/bedmap2_grounded_bed_uncertainty.tif", missingval=typemax(UInt16))[:,end:-1:1,1]
+    push!(ga, :errbed => missing2nan(errbed))
+    rmask = Raster(datadir*"/bedmap2_tiff/bedmap2_icemask_grounded_and_shelves.tif")[:,end:-1:1,1].==0
+    push!(ga, :rmask=>rmask)
 
-#     # make dims a range and also change their Sampling from Intervals to Points
-#     x, y = dims(errbed)
+    # make dims a range and also change their Sampling from Intervals to Points
+    x, y = dims(errbed)
 
-#     dx = Int(step(x)); @assert step(y)==dx
-#     mod = mode(x)
-#     mod = Projected(;mod.order, mod.span, sampling=Points(), mod.crs, mod.mappedcrs)
-#     D = (X(Int(x[1])+500:dx:round(Int,x[end])+500, mode=mod, metadata=metadata(x)),
-#          Y(Int(y[1])+500:dx:round(Int,y[end])+500, mode=mod, metadata=metadata(y)))
-#     @assert val(D[1]).-500==round.(Int,val(x)) && val(D[2]).-500==round.(Int,val(y))
+    dx = Int(step(x)); @assert step(y)==dx
+    mod = mode(x)
+    mod = Projected(;mod.order, mod.span, sampling=Points(), mod.crs, mod.mappedcrs)
+    D = (X(Int(x[1])+500:dx:round(Int,x[end])+500, mode=mod, metadata=metadata(x)),
+         Y(Int(y[1])+500:dx:round(Int,y[end])+500, mode=mod, metadata=metadata(y)))
+    @assert val(D[1]).-500==round.(Int,val(x)) && val(D[2]).-500==round.(Int,val(y))
 
-#     RasterStack(RasterStack((;ga...)), dims=D)[box_antarctica...]
-# end
+    RasterStack(RasterStack((;ga...)), dims=D)[box_antarctica...]
+end
 
 # function read_basal_melt_amery(D)
 #     fl = joinpath(datadir, "Amery_basal_melt_2km.mat")
