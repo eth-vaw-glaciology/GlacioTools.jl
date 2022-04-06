@@ -2,8 +2,13 @@
     download_file(url, destination_dir;
                     force_download=false,
                     filename=nothing)
-Download a file, if it has not been downloaded already.  Uses wget, which needs to64
-be installed. Doesn't work for files protected with a password.
+
+Download a file, if it has not been downloaded already.
+For password protected access use the `~/.netrc` file to store passwords, see
+https://everything.curl.dev/usingcurl/netrc .
+
+For downloading files on the local file system prefix them with `file://`
+as you would to see them in a browser.
 
 Input:
 - url -- url for download
@@ -13,20 +18,27 @@ Kwargs:
 - filename -- rename file
 Output:
 - destination_file -- file name (including relative path)
+
+Example
+
+    GlacioTools.download_file("https://raw.githubusercontent.com/pohlan/GlacioTools.jl/main/Project.toml?token=GHSAT0AAAAAABLZTWKNEUY4ZZFQ2QKU4OUQYSNSIRA", "/tmp")
 """
 function download_file(url::String, destination_dir::String;
                         force_download=false,
-                        filename=nothing)
+                       filename=nothing)
+    filename_in_url = split(basename(url),'?')[1] # the '?' separates query parameters, strip that too.
+                                                  # TODO there might be more special chars
     mkpath(destination_dir)
-    destination_file = if filename === nothing && splitext(url)[2] == ".zip"
-        joinpath(destination_dir, splitext(basename(url))[1])
+    destination_file = if filename === nothing && splitext(filename_in_url)[2] == ".zip"
+        joinpath(destination_dir, splitext(filename_in_url)[1])
     elseif filename === nothing
-        joinpath(destination_dir, basename(url))
+        joinpath(destination_dir, filename_in_url)
     else
         joinpath(destination_dir, filename)
     end
     if (isdir(destination_file) || isfile(destination_file)) && !force_download
         # do nothing
+        # print(" ... already downloaded ... ")
         return destination_file
     elseif isdir(destination_file) || isfile(destination_file)
         rm(destination_file)
@@ -68,6 +80,8 @@ Input:
 - destination_dir -- path of the directory to store the download
 Kwargs:
 - force_download -- force the download, even if file is present
+
+Example: see `fetch_Antarctica` in file `Antarctica.jl`
 """
 function get_all_data(datas::Dict, destination_dir::String;
                         force_download=false)

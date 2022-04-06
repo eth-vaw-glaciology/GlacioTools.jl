@@ -1,5 +1,4 @@
 module GlacioTools
-using Revise, Infiltrator  # for developing
 using Downloads, Rasters, Printf
 
 export get_all_data, fetch_Antarctica
