@@ -10,13 +10,15 @@ https://everything.curl.dev/usingcurl/netrc .
 For downloading files on the local file system prefix them with `file://`
 as you would to see them in a browser.
 
-Input:
+# Input
 - url -- url for download
 - destination_dir -- path of the directory to store the download
-Kwargs:
+
+# Optional keyword args
 - force_download -- force the download, even if file is present
 - filename -- rename file
-Output:
+
+# Output
 - destination_file -- file name (including relative path)
 
 Example
@@ -73,10 +75,11 @@ end
                     force_download=false)
 Downloads all files in a directory or dictionary.
 
-Input:
+# Input
 - datas -- collection of files that need to be downloaded; can be a dictionary, a folder or just the path of a single file.
 - destination_dir -- path of the directory to store the download
-Kwargs:
+
+# Optional keyword args
 - force_download -- force the download, even if file is present
 
 Example: see `fetch_Antarctica` in file `Antarctica.jl`

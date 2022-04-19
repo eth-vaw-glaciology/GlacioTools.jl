@@ -2,7 +2,7 @@
 
 const box_antarctica = Box((-2750000, 2780000+1), (-2200000, 2300000+1))
 
-# Note: To download the data the ISG shares need to be mounted (as described here https://vawiki.ethz.ch/vaw/informatics:samba_for_linux?s[]=samba
+# Note: For some of the data the ISG shares need to be mounted (as described here https://vawiki.ethz.ch/vaw/informatics:samba_for_linux?s[]=samba
 function fetch_Antarctica(spec=nothing;
                                 destination_dir="data/Antarctica/",
                                 bedmachine_thin=1)
@@ -42,10 +42,11 @@ function fetch_Antarctica(spec=nothing;
         topo, nc = read_bedmachine(destination_dir, bedmachine_thin)
         output[:bedmachine] = Dict(:topo => topo, :nc => nc)
     end
-    if haskey(datas, :bedmap2)
-        topo = read_bedmap2(destination_dir)
-        output[:bedmap2] = topo
-    end
+    # not working yet
+    # if haskey(datas, :bedmap2)
+    #     topo = read_bedmap2(destination_dir)
+    #     output[:bedmap2] = Dict(:topo => topo)
+    # end
     return output
 end
 

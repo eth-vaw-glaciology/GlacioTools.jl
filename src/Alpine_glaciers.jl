@@ -2,16 +2,17 @@ SGI_IDS = Dict( "Rhone"       => "B43/03",
                 "Aletsch"     => "B36/26",
                 "PlaineMorte" => "A55f/03",
                 "Morteratsch" => "E22/03",
-                "Arolla"      => "B73/14")
+                "Arolla"      => "B73/14",
+                "ArollaHaut"  => "B73/12")
 
 """
     fetch_glacier(name; destination_dir)
 
-Inputs:
+# Input
 - name -- must be one of the following: "Rhone", "Aletsch", "PlaineMorte", "Morteratsch", "Arolla"
 - destination_dir -- path of the directory to store the download
 
-Output:
+# Output
 - struct of type `GlacioTools.DataElevation`` with fields x, y, z_bed, z_surf and rotation matrix R
 """
 function fetch_glacier(name::String; destination_dir::String)
