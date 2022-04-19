@@ -1,6 +1,6 @@
 module GlacioTools
-using Revise, Infiltrator # for development
-using Downloads, Rasters, DBFTables, DataFrames, Shapefile
+using Downloads, Rasters, DBFTables, DataFrames, Shapefile,
+      Statistics, GeoArrays, Interpolations, LinearAlgebra, HDF5
 using Printf
 
 export get_all_data, fetch_Antarctica, fetch_glacier
