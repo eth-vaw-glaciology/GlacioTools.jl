@@ -7,7 +7,7 @@ get_y(ga::Union{Raster,RasterStack})  = val(dims(ga)[2])
     Box(x::Tuple, y::Tuple)
 Get an array that can be used to crop a Raster to specified x and y coordinate ranges.
 """
-Box(x::Tuple, y::Tuple) = (X(Between(x[1],x[2])), Y(Between(y[1],y[2])))
+Box(x::Tuple, y::Tuple) = (X(x[1]..x[2]), Y(y[1]..y[2]))
 
 """
     missing2nan(ar, T=Float32)

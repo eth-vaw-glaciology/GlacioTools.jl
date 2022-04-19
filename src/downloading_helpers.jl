@@ -29,14 +29,12 @@ function download_file(url::String, destination_dir::String;
     filename_in_url = split(basename(url),'?')[1] # the '?' separates query parameters, strip that too.
                                                   # TODO there might be more special chars
     mkpath(destination_dir)
-    destination_file = if filename === nothing && splitext(filename_in_url)[2] == ".zip"
-        joinpath(destination_dir, splitext(filename_in_url)[1])
-    elseif filename === nothing
+    destination_file = if filename === nothing
         joinpath(destination_dir, filename_in_url)
     else
         joinpath(destination_dir, filename)
     end
-    if (isdir(destination_file) || isfile(destination_file)) && !force_download
+    if (isdir(destination_file) || isdir(splitext(destination_file)[1]) || isfile(destination_file)) && !force_download
         # do nothing
         # print(" ... already downloaded ... ")
         return destination_file
@@ -59,7 +57,7 @@ Unpack downloaded .zip, .gz or .tar files
 TODO: .gz and .tar files?
 """
 function preproc_data(fl, destination_dir)
-    if splitext(fl)[2]==".zip"
+    if splitext(fl)[2]==".zip" && !isdir(splitext(fl)[1])
         run(`unzip -ou $fl -d $destination_dir`)
         run(`rm $fl`)
     elseif splitext(fl)[2]==".gz"
@@ -92,7 +90,7 @@ function get_all_data(datas::Dict, destination_dir::String;
                 fl = download_file(d, destination_dir; force_download)
                 preproc_data(fl, destination_dir)
             catch e
-                println(" ... error: $e")
+                println("\n error: $e")
             end
         else
             for dd in d
@@ -100,7 +98,7 @@ function get_all_data(datas::Dict, destination_dir::String;
                     fl = download_file(dd, destination_dir; force_download)
                     preproc_data(fl, destination_dir)
                 catch e
-                    println(" ... error: $e")
+                    println("\n error: $e")
                 end
             end
         end
@@ -111,17 +109,19 @@ end
 function get_all_data(datas::String, destination_dir::String;
                         force_download=false)
     if isdir(datas)
-        d = readdir(datas, join=true)
+        d = "file://" .* readdir(datas, join=true)
     elseif isfile(datas)
+        d = ["file://" * datas]
+    else
         d = [datas]
     end
     for (k, di) in enumerate(d)
         @printf("Downloading file %d out of %d... ", k, length(d))
         try
-            fl = download_file("file://" * di, destination_dir; force_download)
+            fl = download_file(di, destination_dir; force_download)
             preproc_data(fl, destination_dir)
         catch e
-            println(" ... error: $e")
+            println("\n error: $e")
         end
         println("done.")
     end
