@@ -1,10 +1,3 @@
-SGI_IDS = Dict( "Rhone"       => "B43/03",
-                "Aletsch"     => "B36/26",
-                "PlaineMorte" => "A55f/03",
-                "Morteratsch" => "E22/03",
-                "Arolla"      => "B73/14",
-                "ArollaHaut"  => "B73/12")
-
 """
     fetch_glacier(name; destination_dir)
 
@@ -16,12 +9,43 @@ SGI_IDS = Dict( "Rhone"       => "B43/03",
 - struct of type `GlacioTools.DataElevation`` with fields x, y, z_bed, z_surf and rotation matrix R
 """
 function fetch_glacier(name::String; destination_dir::String)
+    SGI_IDS = Dict( "Rhone"       => "B43/03",
+                    "Aletsch"     => "B36/26",
+                    "PlaineMorte" => "A55f/03",
+                    "Morteratsch" => "E22/03",
+                    "Arolla"      => "B73/14",
+                    "ArollaHaut"  => "B73/12")
+    datas = Dict(   # Source: https://www.swisstopo.admin.ch/en/geodata/landscape/tlm3d.html#download
+                    :swissTLM3D   => "https://data.geo.admin.ch/ch.swisstopo.swisstlm3d/swisstlm3d_2022-03/swisstlm3d_2022-03_2056_5728.shp.zip",
+                    # Source: https://www.research-collection.ethz.ch/handle/20.500.11850/434697
+                    :icethickness => "https://www.research-collection.ethz.ch/bitstream/handle/20.500.11850/434697/04_IceThickness_SwissAlps.zip?sequence=10&isAllowed=y",
+                    :swissalti3D  => "https://www.research-collection.ethz.ch/bitstream/handle/20.500.11850/434697/08_SurfaceElevation_SwissAlps.zip?sequence=41&isAllowed=y"
+                    )
+    final_files = ["IceThickness.tif", "SwissALTI3D_r2019.tif", "swissTLM3D_TLM_GLAMOS.dbf",
+                   "swissTLM3D_TLM_BODENBEDECKUNG_ost.shp", "swissTLM3D_TLM_BODENBEDECKUNG_west.shp",
+                   "swissTLM3D_TLM_BODENBEDECKUNG_ost.dbf", "swissTLM3D_TLM_BODENBEDECKUNG_west.dbf"]
     # download
-    get_all_data("https://www.dropbox.com/s/3htehzra9bv6j75/alps_sgi.zip?dl=0",destination_dir)
+    sgi_dir = destination_dir * "alps_sgi/"
+    mkpath(sgi_dir)
+    if any(.!isfile.(sgi_dir .* final_files))
+        get_all_data(datas, sgi_dir)
+        organise_folder(sgi_dir)
+    end
     # select the relevant elevation data
     geom_select(SGI_IDS[name], name, destination_dir)
     extract_geodata(Float64, name, destination_dir)
     return load_elevation(destination_dir * "alps/data_" * name * ".h5")
+end
+
+"Move all files in one folder and remove files that are not needed."
+function organise_folder(dir)
+    files_to_move = [dir * "04_IceThickness_SwissAlps/IceThickness.tif"
+                     dir * readdir(dir * "08_SurfaceElevation_SwissAlps/")
+                     dir * "TLM_BB/" .* filter(x -> startswith(x,"swissTLM3D_TLM_BODEN") && (endswith(x,".shp") || endswith(x,".dbf")), readdir(dir*"TLM_BB/"))]
+    dirs_to_remove = dir .* filter(x->isdir(dir*x),readdir(dir))
+    run(`mv $files_to_move $dir`)
+    run(`rm -r $dirs_to_remove`)
+    return
 end
 
 """
