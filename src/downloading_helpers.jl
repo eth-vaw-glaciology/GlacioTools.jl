@@ -27,7 +27,7 @@ Example
 """
 function download_file(url::String, destination_dir::String;
                         force_download=false,
-                       filename=nothing)
+                        filename=nothing)
     filename_in_url = split(basename(url),'?')[1] # the '?' separates query parameters, strip that too.
                                                   # TODO there might be more special chars
     mkpath(destination_dir)
