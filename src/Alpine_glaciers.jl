@@ -2,19 +2,14 @@
     fetch_glacier(name; destination_dir)
 
 # Input
-- name -- must be one of the following: "Rhone", "Aletsch", "PlaineMorte", "Morteratsch", "Arolla"
-- destination_dir -- path of the directory to store the download
+- `name` -- name of the glacier, used to name the files that are being saved
+- `SGI_ID` -- unique ID of the glacier to find it in the dataset (found at https://www.research-collection.ethz.ch/bitstream/handle/20.500.11850/434697/00_TablesIllustrations%28updatedversion%29.pdf?sequence=39&isAllowed=y)
+- `destination_dir` -- path of the directory to store the download
 
 # Output
-- struct of type `GlacioTools.DataElevation`` with fields x, y, z_bed, z_surf and rotation matrix R
+- struct of type `GlacioTools.DataElevation` with fields ``x``, ``y``, ``z_bed``, ``z_surf`` and rotation matrix ``R``
 """
-function fetch_glacier(name::String; destination_dir::String)
-    SGI_IDS = Dict( "Rhone"       => "B43/03",
-                    "Aletsch"     => "B36/26",
-                    "PlaineMorte" => "A55f/03",
-                    "Morteratsch" => "E22/03",
-                    "Arolla"      => "B73/14",
-                    "ArollaHaut"  => "B73/12")
+function fetch_glacier(name::String, SGI_ID::String; destination_dir::String)
     datas = Dict(   # Source: https://www.swisstopo.admin.ch/en/geodata/landscape/tlm3d.html#download
                     :swissTLM3D   => "https://data.geo.admin.ch/ch.swisstopo.swisstlm3d/swisstlm3d_2022-03/swisstlm3d_2022-03_2056_5728.shp.zip",
                     # Source: https://www.research-collection.ethz.ch/handle/20.500.11850/434697
@@ -32,7 +27,7 @@ function fetch_glacier(name::String; destination_dir::String)
         organise_folder(sgi_dir)
     end
     # select the relevant elevation data
-    geom_select(SGI_IDS[name], name, destination_dir)
+    geom_select(SGI_ID, name, destination_dir)
     extract_geodata(Float64, name, destination_dir)
     return load_elevation(destination_dir * "alps/data_" * name * ".h5")
 end
@@ -93,7 +88,7 @@ Select ice thickness, surface and bedrock elevation data for a given Alpine glac
 
     IceThick_cr = mosaic(first, IceThick_stack)
 
-    # crop surface elevation to ice thckness data
+    # crop surface elevation to ice thickness data
     SurfElev_cr = Rasters.crop(SurfElev; to=IceThick_cr)
 
     # compute bedrock elevation

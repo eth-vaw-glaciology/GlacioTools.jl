@@ -26,18 +26,24 @@ password 1234567
 where `myusername` and `1234567` should be replaced by username and password, respectively. Note that no sensitive logins should be stored in such a way.
 
 ## Alpine glaciers
-Download and read in the bed and surface topography of a selection of alpine glaciers (with routines from [FastIce.jl/GeoData](https://github.com/PTsolvers/FastIce.jl/tree/main/GeoData), see also for more info about data).
+Download and read in the bed and surface topography of a selection of alpine glaciers (with routines from [FastIce.jl/GeoData](https://github.com/PTsolvers/FastIce.jl/tree/main/GeoData)).
 ```
-data = fetch_glacier("Rhone"; destination_dir)
+SGI_ID = "B43/03"
+destination_dir = "../mydata/"
+data = fetch_glacier("Rhone", SGI_ID; destination_dir)
 ```
-where `data` is a struct with entries `x`,`y`,`z_bed`,`z_surf` and `R` (rotation matrix). Possible glaciers are:
-
-- "Rhone"
-- "Aletsch"
-- "PlaineMorte"
-- "Morteratsch"
-- "Arolla"
-- "ArollaHaut"
+where `data` is a struct with entries `x`,`y`,`z_bed`,`z_surf` and `R` (rotation matrix). The `SGI_ID` number identifies the glacier in the dataset and can be found [here](https://www.research-collection.ethz.ch/bitstream/handle/20.500.11850/434697/00_TablesIllustrations(updatedversion).pdf?sequence=39&isAllowed=y). This is an example dictionary containing the `SGI_ID`s for six selected glaciers:
+```
+SGI_IDS = Dict( "Rhone"       => "B43/03",
+                "Aletsch"     => "B36/26",
+                "PlaineMorte" => "A55f/03",
+                "Morteratsch" => "E22/03",
+                "Arolla"      => "B73/14",
+                "ArollaHaut"  => "B73/12")
+```
+The data is downloaded from:
+- [Swisstopo swissTLM3D](https://www.swisstopo.admin.ch/en/geodata/landscape/tlm3d.html#download)
+- [Grab 2020, Swiss Glacier Thickness – Release 2020 (ETH Research Collection)](https://www.research-collection.ethz.ch/handle/20.500.11850/434697) (`04_IceThickness_SwissAlps.zip` and `08_SurfaceElevation_SwissAlps.zip`)
 
 ## Antarctica
 Download and read Antarctica topography data, as in [FourDAntarcticaSubglacialRouting.jl](https://github.com/mauro3/FourDAntarcticaSubglacialRouting.jl).
