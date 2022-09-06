@@ -27,25 +27,29 @@ Example
 """
 function download_file(url::String, destination_dir::String;
                         force_download=false,
-                        filename=nothing)
+                       filename=nothing)
     filename_in_url = split(basename(url),'?')[1] # the '?' separates query parameters, strip that too.
-                                                  # TODO there might be more special chars
+                                                  # TODO there might be more special URL-chars?
     mkpath(destination_dir)
     destination_file = if filename === nothing
         joinpath(destination_dir, filename_in_url)
     else
         joinpath(destination_dir, filename)
     end
-    if (isdir(destination_file) || isdir(splitext(destination_file)[1]) || isfile(destination_file)) && !force_download
+    @assert destination_dir == dirname(destination_file)
+    if isfile(destination_file) && !force_download
         # do nothing
         # print(" ... already downloaded ... ")
-        return destination_file
-    elseif isdir(destination_file) || isfile(destination_file)
+    elseif isfile(destination_file)
         rm(destination_file)
-    end
-    if startswith(url, "file://")
-        # just copy, without the "file://" part
-        cp(url[8:end], destination_file, force=force_download)
+        Downloads.download(url, destination_file)
+
+        # if startswith(url, "file://")
+        #     # just copy, without the "file://" part
+        #     cp(url[8:end], destination_file, force=force_download)
+        # else
+        #     Downloads.download(url, destination_file)
+        # end
     else
         Downloads.download(url, destination_file)
     end
@@ -76,7 +80,9 @@ end
 Downloads all files in a directory or dictionary.
 
 # Input
-- datas -- collection of files that need to be downloaded; can be a dictionary, a folder or just the path of a single file.
+- datas -- collection of files that need to be downloaded; can be a dictionary,
+           a folder-path or just the path of a single file.
+           --> folders are not downloaded recursively!
 - destination_dir -- path of the directory to store the download
 
 # Optional keyword args
@@ -98,7 +104,7 @@ function get_all_data(datas::Dict, destination_dir::String;
         else
             for dd in d
                 try
-                    fl = download_file(dd, destination_dir; force_download)
+                    @show fl = download_file(dd, destination_dir; force_download)
                     preproc_data(fl, destination_dir)
                 catch e
                     println("\n error: $e")
@@ -112,7 +118,7 @@ end
 function get_all_data(datas::String, destination_dir::String;
                         force_download=false)
     if isdir(datas)
-        d = "file://" .* readdir(datas, join=true)
+        d = ["file://" * fl for fl in readdir(datas, join=true) if isfile(fl)]
     elseif isfile(datas)
         d = ["file://" * datas]
     else

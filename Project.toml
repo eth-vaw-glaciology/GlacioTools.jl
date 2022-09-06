@@ -1,6 +1,6 @@
 name = "GlacioTools"
 uuid = "f6e1814d-c37d-4673-9f0b-038c7b842264"
-authors = ["pohlan <apohle@ethz.ch>"]
+authors = ["pohlan <apohle@ethz.ch>", "Mauro Werder <mauro3@runbox.com>"]
 version = "0.1.0"
 
 [deps]
@@ -16,3 +16,12 @@ Rasters = "a3a2b9e3-a471-40c9-b274-f788e487c689"
 Revise = "295af30f-e4ad-537b-8983-00126c2a3abe"
 Shapefile = "8e980c4a-a4fe-5da2-b3a7-4b4b0353a2f4"
 Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
+
+[compat]
+julia = "1"
+
+[extras]
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+
+[targets]
+test = ["Test"]
