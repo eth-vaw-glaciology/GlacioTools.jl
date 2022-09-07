@@ -2,14 +2,8 @@
 
 const box_antarctica = Box((-2750000, 2780000+1), (-2200000, 2300000+1))
 
-# Note: For some of the data the ISG shares need to be mounted
-# (as described here https://vawiki.ethz.ch/vaw/informatics:samba_for_linux?s[]=samba
-function fetch_antarctica(spec=nothing;
-                                destination_dir="data/Antarctica",
-                                bedmachine_thin=1)
-    vaw_url = "https://people.ee.ethz.ch/~werderm/4d-data-9xWArBUYVr/"
-    datas = Dict(:bedmachine => "https://n5eil01u.ecs.nsidc.org/MEASURES/NSIDC-0756.002/1970.01.01/BedMachineAntarctica_2020-07-15_v02.nc",   # requires password, i.e. .netrc file
-                 #:bedmachine => "file://" * homedir() * "/itet-stor/glazioarch/GlacioData/BedMachine_Antarctica/168596330/BedMachineAntarctica_2019-11-05_v01.nc", # requires access to IGS share
+const  vaw_url = "https://people.ee.ethz.ch/~werderm/4d-data-9xWArBUYVr/"
+const datas = Dict(:bedmachine => "https://n5eil01u.ecs.nsidc.org/MEASURES/NSIDC-0756.002/1970.01.01/BedMachineAntarctica_2020-07-15_v02.nc",   # requires password, i.e. .netrc file
                  #:rema100 => "http://data.pgc.umn.edu/elev/dem/setsm/REMA/mosaic/v1.1/100m/REMA_100m_dem.tif",
                  :basal_amery_2km => vaw_url * "goldberg/Amery_basal_melt/Amery_basal_melt_2km.mat",
                  :basal_amery_5km => vaw_url * "goldberg/Amery_basal_melt/Amery_basal_melt_5km.mat",
@@ -28,6 +22,13 @@ function fetch_antarctica(spec=nothing;
                  :gls_measures => ["https://n5eil01u.ecs.nsidc.org/MEASURES/NSIDC-0709.002/1992.02.07/GroundingLine_Antarctica_v02.shp",
                                    "https://n5eil01u.ecs.nsidc.org/MEASURES/NSIDC-0709.002/1992.02.07/GroundingLine_Antarctica_v02.dbf"]
                  )
+
+
+# Note: For some of the data the ISG shares need to be mounted
+# (as described here https://vawiki.ethz.ch/vaw/informatics:samba_for_linux?s[]=samba
+function fetch_antarctica(spec=nothing;
+                                destination_dir="data/Antarctica",
+                                bedmachine_thin=1)
 
     # keep only specified keys, default keep everything
     if !isnothing(spec)
