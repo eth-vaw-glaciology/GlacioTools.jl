@@ -36,7 +36,8 @@ function download_file(url::String, destination_dir::String;
     else
         joinpath(destination_dir, filename)
     end
-    @assert destination_dir == dirname(destination_file)
+
+    @assert rstrip(destination_dir, '/') == dirname(destination_file)
     if isfile(destination_file) && !force_download
         # do nothing
         # print(" ... already downloaded ... ")

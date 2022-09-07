@@ -3,7 +3,7 @@
 A package to assist in downloading and reading data, particularly glaciology relevant data from Antarctica and a few Alpine glaciers.
 
 ## General download
-The general downloading routine `get_all_data()` (from [FourDAntarcticaSubglacialRouting.jl](https://github.com/mauro3/FourDAntarcticaSubglacialRouting.jl)) is flexible in its use:
+The general downloading routine `get_all_data()` is flexible in its use:
 ```
 get_all_data(myfile, destination_dir)
 get_all_data(myfolder, destination_dir)
@@ -12,20 +12,23 @@ get_all_data(mydictionary, destination_dir)
 ```
 The file is saved to the folder `destination_dir`. If the input is a file or folder path, the file is simply copied. The input can also be a dictionary, e.g.:
 ```
-datas = Dict(:example1 => "https://ex1.mat",
-             :example2 => "https://ex2.zip")
+datas = Dict(:dataset1 => "https://ex1.mat",
+             :dataset2 => ["https://ex2.zip", "https://ex3.zip"])
 ```
 
 ### Password protected download
-If the download requires a password, as e.g. for the [Antarctica bedmachine](https://urs.earthdata.nasa.gov/oauth/authorize?client_id=_JLuwMHxb2xX6NwYTb4dRA&response_type=code&redirect_uri=https%3A%2F%2Fn5eil01u.ecs.nsidc.org%2FOPS%2Fredirect&state=aHR0cDovL241ZWlsMDF1LmVjcy5uc2lkYy5vcmcvTUVBU1VSRVMvTlNJREMtMDc1Ni4wMDIvMTk3MC4wMS4wMS9CZWRNYWNoaW5lQW50YXJjdGljYV8yMDIwLTA3LTE1X3YwMi5uYw), the automatic download requires a `~/.netrc` file. In case of the bedmachine this file should look like the following
+If the download requires a password, as e.g. for the [Antarctica
+Bedmachine
+dataset](https://urs.earthdata.nasa.gov/oauth/authorize?client_id=_JLuwMHxb2xX6NwYTb4dRA&response_type=code&redirect_uri=https%3A%2F%2Fn5eil01u.ecs.nsidc.org%2FOPS%2Fredirect&state=aHR0cDovL241ZWlsMDF1LmVjcy5uc2lkYy5vcmcvTUVBU1VSRVMvTlNJREMtMDc1Ni4wMDIvMTk3MC4wMS4wMS9CZWRNYWNoaW5lQW50YXJjdGljYV8yMDIwLTA3LTE1X3YwMi5uYw),
+the automatic download requires a `~/.netrc` file. In case of the bedmachine this file should contain a line
 ```
-machine urs.earthdata.nasa.gov
-login myusername
-password 1234567
+machine urs.earthdata.nasa.gov login myusername password 1234567
 ```
-where `myusername` and `1234567` should be replaced by username and password, respectively. Note that no sensitive logins should be stored in such a way.
+where `myusername` and `1234567` should be replaced by username and password, respectively. Note that no super-sensitive logins should be stored in such a way as the `.netrc` is not encrypted.
 
-## Alpine glaciers
+## Specific datasets
+
+### Alpine glaciers
 Download and read in the bed and surface topography of a selection of alpine glaciers (with routines from [FastIce.jl/GeoData](https://github.com/PTsolvers/FastIce.jl/tree/main/GeoData)).
 ```
 SGI_ID = "B43/03"
@@ -45,10 +48,10 @@ The data is downloaded from:
 - [Swisstopo swissTLM3D](https://www.swisstopo.admin.ch/en/geodata/landscape/tlm3d.html#download)
 - [Grab 2020, Swiss Glacier Thickness – Release 2020 (ETH Research Collection)](https://www.research-collection.ethz.ch/handle/20.500.11850/434697) (`04_IceThickness_SwissAlps.zip` and `08_SurfaceElevation_SwissAlps.zip`)
 
-## Antarctica
-Download and read Antarctica topography data, as in [FourDAntarcticaSubglacialRouting.jl](https://github.com/mauro3/FourDAntarcticaSubglacialRouting.jl).
+### Antarctica
+Download and read Antarctica topography data
 ```
-data = fetch_Antarctica([:bedmachine]; destination_dir)
+data = fetch_antarctica([:bedmachine]; destination_dir)
 ```
 So far only the :bedmachine is implemented.
 
