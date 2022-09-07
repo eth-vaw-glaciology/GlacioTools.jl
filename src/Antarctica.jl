@@ -2,9 +2,10 @@
 
 const box_antarctica = Box((-2750000, 2780000+1), (-2200000, 2300000+1))
 
-# Note: For some of the data the ISG shares need to be mounted (as described here https://vawiki.ethz.ch/vaw/informatics:samba_for_linux?s[]=samba
-function fetch_Antarctica(spec=nothing;
-                                destination_dir="data/Antarctica/",
+# Note: For some of the data the ISG shares need to be mounted
+# (as described here https://vawiki.ethz.ch/vaw/informatics:samba_for_linux?s[]=samba
+function fetch_antarctica(spec=nothing;
+                                destination_dir="data/Antarctica",
                                 bedmachine_thin=1)
     vaw_url = "https://people.ee.ethz.ch/~werderm/4d-data-9xWArBUYVr/"
     datas = Dict(:bedmachine => "https://n5eil01u.ecs.nsidc.org/MEASURES/NSIDC-0756.002/1970.01.01/BedMachineAntarctica_2020-07-15_v02.nc",   # requires password, i.e. .netrc file
@@ -32,58 +33,49 @@ function fetch_Antarctica(spec=nothing;
     if !isnothing(spec)
         for s in keys(datas) !in(s, spec) ? delete!(datas, s) : nothing end
     end
+    length(datas)==0 && return nothing
+    mkpath(destination_dir)
 
     # download
     get_all_data(datas, destination_dir)
 
-    # reading
-    output = Dict()
-    if haskey(datas, :bedmachine)
-        topo, nc = read_bedmachine(destination_dir, bedmachine_thin)
-        output[:bedmachine] = Dict(:topo => topo, :nc => nc)
-    end
-    # not working yet
-    # if haskey(datas, :bedmap2)
-    #     topo = read_bedmap2(destination_dir)
-    #     output[:bedmap2] = Dict(:topo => topo)
-    # end
-    return output
+    return
 end
 
 function read_bedmachine(datadir, thin=1)
-    nc = NCDstack(datadir * "/BedMachineAntarctica_2020-07-15_v02.nc") # this doesn't do anything: , childkwargs=(crs=crs,))
-    # read arrays into memory and thin them, if desired
+    nc = RasterStack(datadir * "/BedMachineAntarctica_2020-07-15_v02.nc")
     gas = []
-    for k in keys(nc)
-        if k in [:mapping, :thickness,  :source, :geoid, :mask]
-            continue # drop these fields
+    for k in [:bed, :errbed, :surface, :firn, :source, :mask]
+        ga = nc[k]
+        ga = (reverse(ga[1:thin:end, 1:thin:end], dims=2))[box_antarctica...] # this also loads it into memory
+        if k==:errbed # this is {Missing, Int16}
+            ga = replace_missing(ga, -9999)
+            data = convert(Matrix{Float32}, ga.data)
+            ga = replace_missing(Raster(data; ga.dims, ga.name, ga.refdims, ga.metadata, missingval=-9999), NaN)
         end
-        ga = (reverse(nc[k][1:thin:end, 1:thin:end], dims=2))[box_antarctica...] # this also loads it into memory
-        ga = if k==:bed || k==:errbed || k==:surface || k==:firn
-            # remove "missing" for bed, errbed and surface
-            missing2nan(ga)
+
+        ga = if k==:bed || k==:surface || k==:firn
+            # remove "missing" for bed and surface
+            replace_missing(ga, NaN)
+        elseif k==:source || k==:mask
+            replace_missing(ga, -1)
         else
             ga
         end
         push!(gas, ga)
-    end
-    mask = reverse(nc[:mask][1:thin:end, 1:thin:end], dims=2)
 
-    # add mask where water is routed
-    # route water over(under): grounded ice or lake Vostok or ice-free-land
-    rmask = (mask.==2) .| (mask.==4) .| (mask.==1);
-    push!(gas, Raster(rmask, name=:rmask)[box_antarctica...])
+        if k==:mask
+            # Add mask where (sub)glacial water should be routed/flowing:
+            # grounded ice or lake Vostok or ice-free-land
+            rmask = (ga.==2) .| (ga.==4) .| (ga.==1);
+            push!(gas, Raster(rmask, name=:rmask))
+        end
+    end
 
     # make dims a range:
     x, y = dims(gas[1])
 
-    #dx = x[2]-x[1]; @assert y[2]-y[1]==dx
-    #D = (X(x[1]:dx:x[end], mode=mode(x), metadata=metadata(x)),
-    #     Y(y[1]:dx:y[end], mode=mode(y), metadata=metadata(y)))
-    #@assert val(D[1])==val(x) && val(D[2])==val(y)
-    # the double-RasterStack is necessary as the first cannot use the dims-kw:
-    return RasterStack(RasterStack(gas..., metadata=nc.metadata), dims=(x, y)), nc
-#    return RasterStack(gas..., metadata=nc.metadata), nc
+    return RasterStack(gas..., metadata=nc.metadata, dims=(x, y)), nc
 end
 
 function read_bedmap2(datadir)

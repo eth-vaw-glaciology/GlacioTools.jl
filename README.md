@@ -51,9 +51,10 @@ The data is downloaded from:
 ### Antarctica
 Download and read Antarctica topography data
 ```
-data = fetch_antarctica([:bedmachine]; destination_dir)
+fetch_antarctica([:bedmachine]; destination_dir)
+bm = read_bedmachine(destination_dir, thin=1)[1]
 ```
-So far only the :bedmachine is implemented.
+So far only the BedMachine is implemented.
 
 ## TODO
 - make the reading functions for other Antarctica data work
