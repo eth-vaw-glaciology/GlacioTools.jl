@@ -76,8 +76,10 @@ end
 
 """
     get_all_data(datas, destination_dir::String;
-                    force_download=false)
-Downloads all files in a directory or dictionary.
+                        force_download=false,
+                        preproc=true)
+
+Downloads all files in a directory or dictionary and runs `preproc_data` on them too.
 
 # Input
 - datas -- collection of files that need to be downloaded; can be a dictionary,
@@ -86,37 +88,42 @@ Downloads all files in a directory or dictionary.
 - destination_dir -- path of the directory to store the download
 
 # Optional keyword args
-- force_download -- force the download, even if file is present
+- force_download -- force the download, even if file is present [false]
+- preproc -- run `preproc_data` [true]
 
 Example: see `fetch_Antarctica` in file `Antarctica.jl`
 """
 function get_all_data(datas::Dict, destination_dir::String;
-                        force_download=false)
+                      force_download=false,
+                      preproc=true)
     for (k,d) in datas
         print("Downloading $k... ")
         if d isa AbstractString
             try
                 fl = download_file(d, destination_dir; force_download)
-                preproc_data(fl, destination_dir)
+                preproc && preproc_data(fl, destination_dir)
             catch e
                 println("\n error: $e")
             end
-        else
+        elseif d isa Vector
             for dd in d
                 try
                     @show fl = download_file(dd, destination_dir; force_download)
-                    preproc_data(fl, destination_dir)
+                    preproc && preproc_data(fl, destination_dir)
                 catch e
                     println("\n error: $e")
                 end
             end
+        else
+            error("`datas` Dict values need to be strings or list of strings")
         end
         println("done.")
     end
     nothing
 end
 function get_all_data(datas::String, destination_dir::String;
-                        force_download=false)
+                      force_download=false,
+                      preproc=true)
     if isdir(datas)
         d = ["file://" * fl for fl in readdir(datas, join=true) if isfile(fl)]
     elseif isfile(datas)
@@ -128,7 +135,7 @@ function get_all_data(datas::String, destination_dir::String;
         @printf("Downloading file %d out of %d... ", k, length(d))
         try
             fl = download_file(di, destination_dir; force_download)
-            preproc_data(fl, destination_dir)
+            preproc && preproc_data(fl, destination_dir)
         catch e
             println("\n error: $e")
         end
