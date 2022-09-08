@@ -1,5 +1,5 @@
 """
-    download_file(url, destination_dir;
+    download_file(url, datadir;
                     force_download=false,
                     filename=nothing)
 
@@ -12,7 +12,7 @@ as you would to see them in a browser.
 
 # Input
 - url -- url for download
-- destination_dir -- path of the directory to store the download
+- datadir -- path of the directory to store the download
 
 # Optional keyword args
 - force_download -- force the download, even if file is present
@@ -25,19 +25,19 @@ Example
 
     GlacioTools.download_file("https://raw.githubusercontent.com/pohlan/GlacioTools.jl/main/Project.toml?token=GHSAT0AAAAAABLZTWKNEUY4ZZFQ2QKU4OUQYSNSIRA", "/tmp")
 """
-function download_file(url::String, destination_dir::String;
+function download_file(url::String, datadir::String;
                         force_download=false,
                        filename=nothing)
     filename_in_url = split(basename(url),'?')[1] # the '?' separates query parameters, strip that too.
                                                   # TODO there might be more special URL-chars?
-    mkpath(destination_dir)
+    mkpath(datadir)
     destination_file = if filename === nothing
-        joinpath(destination_dir, filename_in_url)
+        joinpath(datadir, filename_in_url)
     else
-        joinpath(destination_dir, filename)
+        joinpath(datadir, filename)
     end
 
-    @assert rstrip(destination_dir, '/') == dirname(destination_file)
+    @assert rstrip(datadir, '/') == dirname(destination_file)
     if isfile(destination_file) && !force_download
         # do nothing
         # print(" ... already downloaded ... ")
@@ -58,14 +58,14 @@ function download_file(url::String, destination_dir::String;
 end
 
 """
-    preproc_data(fl, destination_dir)
+    preproc_data(fl, datadir)
 Unpack downloaded .zip, .gz or .tar files
 
 TODO: .gz and .tar files?
 """
-function preproc_data(fl, destination_dir)
+function preproc_data(fl, datadir)
     if splitext(fl)[2]==".zip" && !isdir(splitext(fl)[1])
-        run(`unzip -ou $fl -d $destination_dir`)
+        run(`unzip -ou $fl -d $datadir`)
         run(`rm $fl`)
     elseif splitext(fl)[2]==".gz"
         @assert splitext(splitext(fl)[1])[2]==".tar"
@@ -76,7 +76,7 @@ function preproc_data(fl, destination_dir)
 end
 
 """
-    get_all_data(datas, destination_dir::String;
+    get_all_data(datas, datadir::String;
                         force_download=false,
                         preproc=true)
 
@@ -86,7 +86,7 @@ Downloads all files in a directory or dictionary and runs `preproc_data` on them
 - datas -- collection of files that need to be downloaded; can be a dictionary,
            a folder-path or just the path of a single file.
            --> folders are not downloaded recursively!
-- destination_dir -- path of the directory to store the download
+- datadir -- path of the directory to store the download
 
 # Optional keyword args
 - force_download -- force the download, even if file is present [false]
@@ -94,23 +94,23 @@ Downloads all files in a directory or dictionary and runs `preproc_data` on them
 
 Example: see `fetch_Antarctica` in file `Antarctica.jl`
 """
-function get_all_data(datas::Dict, destination_dir::String;
+function get_all_data(datas::Dict, datadir::String;
                       force_download=false,
                       preproc=true)
     for (k,d) in datas
         print("Downloading $k... ")
         if d isa AbstractString
             try
-                fl = download_file(d, destination_dir; force_download)
-                preproc && preproc_data(fl, destination_dir)
+                fl = download_file(d, datadir; force_download)
+                preproc && preproc_data(fl, datadir)
             catch e
                 println("\n error: $e")
             end
         elseif d isa Vector
             for dd in d
                 try
-                    @show fl = download_file(dd, destination_dir; force_download)
-                    preproc && preproc_data(fl, destination_dir)
+                    @show fl = download_file(dd, datadir; force_download)
+                    preproc && preproc_data(fl, datadir)
                 catch e
                     println("\n error: $e")
                 end
@@ -122,7 +122,7 @@ function get_all_data(datas::Dict, destination_dir::String;
     end
     nothing
 end
-function get_all_data(datas::String, destination_dir::String;
+function get_all_data(datas::String, datadir::String;
                       force_download=false,
                       preproc=true)
     if isdir(datas)
@@ -135,8 +135,8 @@ function get_all_data(datas::String, destination_dir::String;
     for (k, di) in enumerate(d)
         @printf("Downloading file %d out of %d... ", k, length(d))
         try
-            fl = download_file(di, destination_dir; force_download)
-            preproc && preproc_data(fl, destination_dir)
+            fl = download_file(di, datadir; force_download)
+            preproc && preproc_data(fl, datadir)
         catch e
             println("\n error: $e")
         end

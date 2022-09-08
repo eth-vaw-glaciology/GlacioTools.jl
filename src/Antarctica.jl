@@ -27,7 +27,7 @@ const datas = Dict(:bedmachine => "https://n5eil01u.ecs.nsidc.org/MEASURES/NSIDC
 # Note: For some of the data the ISG shares need to be mounted
 # (as described here https://vawiki.ethz.ch/vaw/informatics:samba_for_linux?s[]=samba
 function fetch_antarctica(spec=nothing;
-                                destination_dir="data/Antarctica",
+                                datadir="data/Antarctica",
                                 bedmachine_thin=1)
 
     # keep only specified keys, default keep everything
@@ -35,10 +35,10 @@ function fetch_antarctica(spec=nothing;
         for s in keys(datas) !in(s, spec) ? delete!(datas, s) : nothing end
     end
     length(datas)==0 && return nothing
-    mkpath(destination_dir)
+    mkpath(datadir)
 
     # download
-    get_all_data(datas, destination_dir)
+    get_all_data(datas, datadir)
 
     return
 end
@@ -102,24 +102,24 @@ function read_bedmap2(datadir)
     return RasterStack((;ga...), dims=D)[box_antarctica...]
 end
 
-# function read_basal_melt_amery(D)
-#     fl = joinpath(datadir, "Amery_basal_melt_2km.mat")
-#     handle = matopen(fl)
-#     dat = read(handle, "Amery_basal_melt_data")
-#     close(handle)
+function read_basal_melt_amery(D)
+    fl = joinpath(datadir, "Amery_basal_melt_2km.mat")
+    handle = matopen(fl)
+    dat = read(handle, "Amery_basal_melt_data")
+    close(handle)
 
-#     mr = convert(Matrix{Float32}, dat["Melt_rate"]')
-#     mr[isnan.(mr)] .= 0
-#     mr[mr.<=0] .= 0 # TODO: are there freeze-on regions?
+    mr = convert(Matrix{Float32}, dat["Melt_rate"]')
+    mr[isnan.(mr)] .= 0
+    mr[mr.<=0] .= 0 # TODO: are there freeze-on regions?
 
-#     # make into a Raster
-#     xx, yy = D
-#     x,y = dat["X_coord"][1,:], dat["Y_coord"][:,1]
-#     dx = Int(x[2]-x[1])
-#     xx = X(Int(x[1]):dx:Int(x[end]), mode=mode(xx), metadata=metadata(xx))
-#     yy = Y(Int(y[1]):dx:Int(y[end]), mode=mode(yy), metadata=metadata(yy))
-#     return Raster(mr/year, name=:melt, dims=(xx,yy)) # convert to m/s
-# end
+    # make into a Raster
+    xx, yy = D
+    x,y = dat["X_coord"][1,:], dat["Y_coord"][:,1]
+    dx = Int(x[2]-x[1])
+    xx = X(Int(x[1]):dx:Int(x[end]), mode=mode(xx), metadata=metadata(xx))
+    yy = Y(Int(y[1]):dx:Int(y[end]), mode=mode(yy), metadata=metadata(yy))
+    return Raster(mr/year, name=:melt, dims=(xx,yy)) # convert to m/s
+end
 
 # function read_lebrocq_flux()
 #     out = GDALarray(datadir * "/SubglacialWaterFlux_Modelled_1km.tif")[1:end,1:end,1]

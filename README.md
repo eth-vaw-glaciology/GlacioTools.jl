@@ -5,12 +5,12 @@ A package to assist in downloading and reading data, particularly glaciology rel
 ## General download
 The general downloading routine `get_all_data()` is flexible in its use:
 ```
-get_all_data(myfile, destination_dir)
-get_all_data(myfolder, destination_dir)
-get_all_data(myurl, destination_dir)
-get_all_data(mydictionary, destination_dir)
+get_all_data(myfile, datadir)
+get_all_data(myfolder, datadir)
+get_all_data(myurl, datadir)
+get_all_data(mydictionary, datadir)
 ```
-The file is saved to the folder `destination_dir`. If the input is a file or folder path, the file is simply copied. The input can also be a dictionary, e.g.:
+The file is saved to the folder `datadir`. If the input is a file or folder path, the file is simply copied. The input can also be a dictionary, e.g.:
 ```
 datas = Dict(:dataset1 => "https://ex1.mat",
              :dataset2 => ["https://ex2.zip", "https://ex3.zip"])
@@ -32,8 +32,8 @@ where `myusername` and `1234567` should be replaced by username and password, re
 Download and read in the bed and surface topography of a selection of alpine glaciers (with routines from [FastIce.jl/GeoData](https://github.com/PTsolvers/FastIce.jl/tree/main/GeoData)).
 ```
 SGI_ID = "B43/03"
-destination_dir = "../mydata/"
-data = fetch_glacier("Rhone", SGI_ID; destination_dir)
+datadir = "../mydata/"
+data = fetch_glacier("Rhone", SGI_ID; datadir)
 ```
 where `data` is a struct with entries `x`,`y`,`z_bed`,`z_surf` and `R` (rotation matrix). The `SGI_ID` number identifies the glacier in the dataset and can be found [here](https://www.research-collection.ethz.ch/bitstream/handle/20.500.11850/434697/00_TablesIllustrations(updatedversion).pdf?sequence=39&isAllowed=y). This is an example dictionary containing the `SGI_ID`s for six selected glaciers:
 ```
@@ -51,8 +51,8 @@ The data is downloaded from:
 ### Antarctica
 Download and read Antarctica topography data
 ```
-fetch_antarctica([:bedmachine]; destination_dir)
-bm = read_bedmachine(destination_dir, thin=1)[1]
+fetch_antarctica([:bedmachine]; datadir)
+bm = read_bedmachine(datadir, thin=1)[1]
 ```
 So far only the BedMachine is implemented.
 
