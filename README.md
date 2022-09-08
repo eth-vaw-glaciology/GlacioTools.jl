@@ -2,6 +2,9 @@
 
 A package to assist in downloading and reading data, particularly glaciology relevant data from Antarctica and a few Alpine glaciers.
 
+[![Build Status](https://github.com/mauro3/GlacioTools.jl/actions/workflows/CI.yml/badge.svg?branch=master)](https://github.com/mauro3/GlacioTools.jl/actions/workflows/CI.yml?query=branch%3Amaster)
+[![Coverage](https://codecov.io/gh/mauro3/GlacioTools.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/mauro3/GlacioTools.jl)
+
 ## General download
 The general downloading routine `get_all_data()` is flexible in its use:
 ```

@@ -1,6 +1,6 @@
 name = "GlacioTools"
 uuid = "f6e1814d-c37d-4673-9f0b-038c7b842264"
-authors = ["pohlan <apohle@ethz.ch>", "Mauro Werder <mauro3@runbox.com>"]
+authors = ["pohlan <apohle@ethz.ch>", "Mauro Werder <mauro3@runbox.com>", "luraess"]
 version = "0.1.0"
 
 [deps]
