@@ -83,24 +83,23 @@ function read_bedmap2(datadir)
     fls = Dict(:bed => datadir*"/bedmap2_tiff/bedmap2_bed.tif",
                :surface => datadir*"/bedmap2_tiff/bedmap2_surface.tif")
 
-    ga = Any[k=>missing2nan(Raster.(v)[:,end:-1:1,1]) for (k,v) in fls]
+    ga = Any[k=>Raster.(v)[:,end:-1:1,1] for (k,v) in fls]
 
     errbed = Raster(datadir*"/bedmap2_tiff/bedmap2_grounded_bed_uncertainty.tif", missingval=typemax(UInt16))[:,end:-1:1,1]
-    push!(ga, :errbed => missing2nan(errbed))
+    push!(ga, :errbed => errbed)
     rmask = Raster(datadir*"/bedmap2_tiff/bedmap2_icemask_grounded_and_shelves.tif")[:,end:-1:1,1].==0
     push!(ga, :rmask=>rmask)
 
     # make dims a range and also change their Sampling from Intervals to Points
     x, y = dims(errbed)
-
     dx = Int(step(x)); @assert step(y)==dx
-    mod = mode(x)
-    mod = Projected(;mod.order, mod.span, sampling=Points(), mod.crs, mod.mappedcrs)
+    mod = x.val
+    mod = Projected(;mod.order, mod.span, sampling=Rasters.DimensionalData.Dimensions.LookupArrays.Points(), mod.crs, mod.mappedcrs)
     D = (X(Int(x[1])+500:dx:round(Int,x[end])+500, mode=mod, metadata=metadata(x)),
          Y(Int(y[1])+500:dx:round(Int,y[end])+500, mode=mod, metadata=metadata(y)))
-    @assert val(D[1]).-500==round.(Int,val(x)) && val(D[2]).-500==round.(Int,val(y))
+    @assert D[1].val .- 500==round.(Int, x.val) && D[2].val .- 500 == round.(Int, y.val)
 
-    RasterStack(RasterStack((;ga...)), dims=D)[box_antarctica...]
+    return RasterStack((;ga...), dims=D)[box_antarctica...]
 end
 
 # function read_basal_melt_amery(D)
