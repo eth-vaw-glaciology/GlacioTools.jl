@@ -64,15 +64,19 @@ Unpack downloaded .zip, .gz or .tar files
 TODO: .gz and .tar files?
 """
 function preproc_data(fl, datadir)
-    if splitext(fl)[2]==".zip" && !isdir(splitext(fl)[1])
-        run(`unzip -ou $fl -d $datadir`)
-        run(`rm $fl`)
+    fll = splitdir(fl)[2]
+    fn = if splitext(fl)[2]==".zip" && !isdir(splitext(fl)[1])
+        () -> run(`unzip -ou $fll -d $datadir`)
     elseif splitext(fl)[2]==".gz"
         @assert splitext(splitext(fl)[1])[2]==".tar"
-        run(`tar xzf $fl`)
+        () -> run(`tar xzf $fll`)
     elseif splitext(fl)[2]==".tar"
-        run(`tar xf $fl`)
+        () -> run(`tar xf $fll`)
+    else
+        () -> nothing
     end
+    cd(fn, datadir)
+    return
 end
 
 """
@@ -109,10 +113,10 @@ function get_all_data(datas::Dict, datadir::String;
         elseif d isa Vector
             for dd in d
                 try
-                    @show fl = download_file(dd, datadir; force_download)
+                    fl = download_file(dd, datadir; force_download)
                     preproc && preproc_data(fl, datadir)
                 catch e
-                    println("\n error: $e")
+                    println("\n error: $e" )
                 end
             end
         else

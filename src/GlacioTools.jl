@@ -1,6 +1,7 @@
 module GlacioTools
 using Downloads, Rasters, DBFTables, DataFrames, Shapefile,
-      Statistics, GeoArrays, Interpolations, LinearAlgebra, HDF5
+    Statistics, GeoArrays, Interpolations, LinearAlgebra, HDF5,
+    GeoInterface, ArchGDAL, DelimitedFiles
 using Printf
 
 export get_all_data, fetch_Antarctica, fetch_glacier
