@@ -6,8 +6,8 @@ const box_antarctica = Box((-2750000, 2780000+1), (-2200000, 2300000+1))
 
 # polar stereographic
 const crs = EPSG(3031)
-const crs2 = ArchGDAL.importEPSG(3031)
-const crs_latlon = ArchGDAL.importEPSG(4326)
+const crs2 = EPSG(3031)
+const crs_latlon = EPSG(4326)
 
 
 const vaw_url = "https://people.ee.ethz.ch/~werderm/4d-data-9xWArBUYVr/"
