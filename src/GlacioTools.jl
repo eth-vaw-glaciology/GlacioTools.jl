@@ -1,6 +1,6 @@
 module GlacioTools
 using Downloads, Rasters, DBFTables, DataFrames, Shapefile,
-    Statistics, GeoArrays, Interpolations, LinearAlgebra, HDF5,
+    Statistics, Interpolations, LinearAlgebra, HDF5,
     GeoInterface, ArchGDAL, DelimitedFiles
 using Printf
 
