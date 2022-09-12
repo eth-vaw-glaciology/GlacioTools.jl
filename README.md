@@ -3,7 +3,8 @@
 A package to assist in downloading and reading data, particularly glaciology relevant data from Antarctica and a few Alpine glaciers.
 
 [![Build Status](https://github.com/eth-vaw-glaciology/GlacioTools.jl/actions/workflows/CI.yml/badge.svg?branch=main)](https://github.com/eth-vaw-glaciology/GlacioTools.jl/actions/workflows/CI.yml?query=branch%3Amain)
-[![Coverage](https://codecov.io/gh/eth-vaw-glaciology/GlacioTools.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/eth-vaw-glaciology/GlacioTools.jl)
+[![Coverage](https://codecov.io/gh/eth-vaw-glaciology/GlacioTools.jl/branch/main/graph/badge.svg?token=WDSZG7V5R3)](https://codecov.io/gh/eth-vaw-glaciology/GlacioTools.jl)
+
 
 ## General download
 The general downloading routine `get_all_data()` is flexible in its use:
