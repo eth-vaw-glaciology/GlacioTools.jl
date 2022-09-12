@@ -59,9 +59,8 @@ end
 
 """
     preproc_data(fl, datadir)
-Unpack downloaded .zip, .gz or .tar files
 
-TODO: .gz and .tar files?
+Unpack downloaded .zip, .gz or .tar files
 """
 function preproc_data(fl, datadir)
     fll = splitdir(fl)[2]

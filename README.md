@@ -56,9 +56,15 @@ Download and read Antarctica topography data
 ```
 fetch_antarctica([:bedmachine]; datadir)
 bm = read_bedmachine(datadir, thin=1)[1]
+# etc.
 ```
-So far only the BedMachine is implemented.
 
 ## TODO
-- make the reading functions for other Antarctica data work
+Helper functions:
 - functions that help modifying raw data (e.g. smoothing), especially e.g. ice thickness
+
+Readers:
+...
+
+Download:
+- be clever on what to do with big datasets of which only a small part is used.

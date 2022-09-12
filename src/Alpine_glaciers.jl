@@ -3,7 +3,7 @@
 
 # Input
 - `name` -- name of the glacier, used to name the files that are being saved
-- `SGI_ID` -- unique ID of the glacier to find it in the dataset (found at https://www.research-collection.ethz.ch/bitstream/handle/20.500.11850/434697/00_TablesIllustrations%28updatedversion%29.pdf?sequence=39&isAllowed=y)
+- `SGI_ID` -- unique ID of the glacier to find it in the dataset (found at https://www.research-collection.ethz.ch/bitstream/handle/20.500.11850/434697/00_TablesIllustrations%28updatedversion%29.pdf?sequence=39&isAllowed=y). [Note that in that dataset the separator is "/" (e.g. "N23/07") but now the separator "-" is used ("N23-07")]
 - `datadir` -- path of the directory to store the downloaded data
 
 # Output
