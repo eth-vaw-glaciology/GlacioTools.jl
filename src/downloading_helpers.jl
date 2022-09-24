@@ -67,8 +67,11 @@ function preproc_data(fl, datadir)
     fn = if splitext(fl)[2]==".zip" && !isdir(splitext(fl)[1])
         () -> run(`unzip -ou $fll -d $datadir`)
     elseif splitext(fl)[2]==".gz"
-        @assert splitext(splitext(fl)[1])[2]==".tar"
-        () -> run(`tar xzf $fll`)
+        if  splitext(splitext(fl)[1])[2]==".tar"
+            () -> run(`tar xzf $fll`)
+        else
+            () -> run(`gunzip $fll`)
+        end
     elseif splitext(fl)[2]==".tar"
         () -> run(`tar xf $fll`)
     else
@@ -107,7 +110,7 @@ function get_all_data(datas::Dict, datadir::String;
                 fl = download_file(d, datadir; force_download)
                 preproc && preproc_data(fl, datadir)
             catch e
-                println("\n error: $e")
+                    println("\n error in get_all_data (1): $e" )
             end
         elseif d isa Vector
             for dd in d
@@ -115,7 +118,7 @@ function get_all_data(datas::Dict, datadir::String;
                     fl = download_file(dd, datadir; force_download)
                     preproc && preproc_data(fl, datadir)
                 catch e
-                    println("\n error: $e" )
+                    println("\n error in get_all_data (2): $e" )
                 end
             end
         else
@@ -141,7 +144,7 @@ function get_all_data(datas::String, datadir::String;
             fl = download_file(di, datadir; force_download)
             preproc && preproc_data(fl, datadir)
         catch e
-            println("\n error: $e")
+            println("\n error in get_all_data (3): $e")
         end
         println("done.")
     end

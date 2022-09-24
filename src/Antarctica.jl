@@ -6,30 +6,30 @@ const box_antarctica = Box((-2750000, 2780000+1), (-2200000, 2300000+1))
 
 # polar stereographic
 const crs = EPSG(3031)
-const crs2 = EPSG(3031)
 const crs_latlon = EPSG(4326)
 
 
-const vaw_url = "https://people.ee.ethz.ch/~werderm/4d-data-9xWArBUYVr/"
-const datas = Dict(:bedmachine => "https://n5eil01u.ecs.nsidc.org/MEASURES/NSIDC-0756.002/1970.01.01/BedMachineAntarctica_2020-07-15_v02.nc",   # requires password, i.e. .netrc file
-                 #:rema100 => "http://data.pgc.umn.edu/elev/dem/setsm/REMA/mosaic/v1.1/100m/REMA_100m_dem.tif",
-                 :basal_amery_2km => vaw_url * "goldberg/Amery_basal_melt/Amery_basal_melt_2km.mat",
-                 :basal_amery_5km => vaw_url * "goldberg/Amery_basal_melt/Amery_basal_melt_5km.mat",
-                 :bedmap2 => ["https://secure.antarctica.ac.uk/data/bedmap2/bedmap2_tiff.zip",
-                              "https://secure.antarctica.ac.uk/data/bedmap2/bedmap2_readme.txt"],
-                 :lebrocq_flux => "ftp://ftp.quantarctica.npolar.no/Quantarctica3/Glaciology/Subglacial%20Water%20Flux/SubglacialWaterFlux_Modelled_1km.tif",
-                 :lakes_WrightSiegert => ["ftp://ftp.quantarctica.npolar.no/Quantarctica3/Glaciology/Subglacial%20Lakes/SubglacialLakes_WrightSiegert.shp",
-                                          "ftp://ftp.quantarctica.npolar.no/Quantarctica3/Glaciology/Subglacial%20Lakes/SubglacialLakes_WrightSiegert.dbf"],
-                 :lakes_amery_hogg => vaw_url * "hogg/annas-lakes.tar.gz",
-                 :lakes_thwaites_malczyk => "https://4d-antarctica.org/wp-content/uploads/2021/01/Malczyk_etal_2020_data_v2.tar",
-                 :glads_amery_dow => [vaw_url * a for a in ["dow/gridded-outputs/Amery_ch_dis_hc_grid.csv",
-                                                            "dow/gridded-outputs/Amery_ch_dis_lc_grid.csv",
-                                                            "dow/gridded-outputs/Amery_X.csv",
-                                                            "dow/gridded-outputs/Amery_Y.csv",
-                                                            ]],
-                 :gls_measures => ["https://n5eil01u.ecs.nsidc.org/MEASURES/NSIDC-0709.002/1992.02.07/GroundingLine_Antarctica_v02.shp",
-                                   "https://n5eil01u.ecs.nsidc.org/MEASURES/NSIDC-0709.002/1992.02.07/GroundingLine_Antarctica_v02.dbf"]
-                 )
+vaw_url = "https://people.ee.ethz.ch/~werderm/4d-data-9xWArBUYVr/"
+datas = Dict(:bedmachine => "https://n5eil01u.ecs.nsidc.org/MEASURES/NSIDC-0756.002/1970.01.01/BedMachineAntarctica_2020-07-15_v02.nc",   # requires password, i.e. .netrc file
+             #:rema100 => "http://data.pgc.umn.edu/elev/dem/setsm/REMA/mosaic/v1.1/100m/REMA_100m_dem.tif",
+             :basal_amery_2km => vaw_url * "goldberg/Amery_basal_melt/Amery_basal_melt_2km.mat",
+             :basal_amery_5km => vaw_url * "goldberg/Amery_basal_melt/Amery_basal_melt_5km.mat",
+             :bedmap2 => ["https://secure.antarctica.ac.uk/data/bedmap2/bedmap2_tiff.zip",
+                          "https://secure.antarctica.ac.uk/data/bedmap2/bedmap2_readme.txt"],
+             :lebrocq_flux => "ftp://ftp.quantarctica.npolar.no/Quantarctica3/Glaciology/Subglacial%20Water%20Flux/SubglacialWaterFlux_Modelled_1km.tif",
+             :lakes_WrightSiegert => ["ftp://ftp.quantarctica.npolar.no/Quantarctica3/Glaciology/Subglacial%20Lakes/SubglacialLakes_WrightSiegert.shp",
+                                      "ftp://ftp.quantarctica.npolar.no/Quantarctica3/Glaciology/Subglacial%20Lakes/SubglacialLakes_WrightSiegert.dbf"],
+             :lakes_amery_hogg => vaw_url * "hogg/annas-lakes.tar.gz",
+             :lakes_thwaites_malczyk => "https://4d-antarctica.org/wp-content/uploads/2021/01/Malczyk_etal_2020_data_v2.tar",
+             :glads_amery_dow => [vaw_url * a for a in ["dow/gridded-outputs/Amery_ch_dis_hc_grid.csv",
+                                                        "dow/gridded-outputs/Amery_ch_dis_lc_grid.csv",
+                                                        "dow/gridded-outputs/Amery_X.csv",
+                                                        "dow/gridded-outputs/Amery_Y.csv",
+                                                        ]],
+             :gls_measures => ["https://n5eil01u.ecs.nsidc.org/MEASURES/NSIDC-0709.002/1992.02.07/GroundingLine_Antarctica_v02.shp",
+                               "https://n5eil01u.ecs.nsidc.org/MEASURES/NSIDC-0709.002/1992.02.07/GroundingLine_Antarctica_v02.dbf"],
+             :modis_moa2009 => ["https://daacdata.apps.nsidc.org/pub/DATASETS/nsidc0593_moa2009_v02/geotiff/moa125_2009_hp1_v02.0.tif.gz"]
+             )
 
 
 """
@@ -40,7 +40,7 @@ then specify the keys in `datasets`.
 
 The reading of the data can then be done with the appropriate file-reader.
 """
-function fetch_antarctica(datasets=nothing; datadir="data/antarctica")
+function fetch_antarctica(datasets=nothing; datadir="data/antarctica", kws...)
     dd = copy(datas)
 
     # keep only specified keys, default keep everything
@@ -51,7 +51,7 @@ function fetch_antarctica(datasets=nothing; datadir="data/antarctica")
     mkpath(datadir)
 
     # download
-    get_all_data(dd, datadir)
+    get_all_data(dd, datadir; kws...)
 
     return
 end
@@ -173,7 +173,7 @@ function read_hogg_lakes(datadir)
             x,y = xy[1,:], xy[2,:]
             z = zeros(Float64, length(geoms.points))
             # transform to polar stereo (note that geoms cannot be directly transformed)
-            ArchGDAL.createcoordtrans(crs_latlon, crs2) do transform
+            ArchGDAL.createcoordtrans(crs_latlon, crs) do transform
                 ArchGDAL.transform!(x, y, z, transform)
             end
             lakes_xy[Symbol(split(splitext(fl)[1], '_')[end])] = (x,y)
