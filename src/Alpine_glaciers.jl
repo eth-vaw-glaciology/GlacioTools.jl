@@ -17,27 +17,28 @@ function fetch_glacier(name::String, SGI_ID::String; datadir::String)
                     :swissalti3D  => "https://www.research-collection.ethz.ch/bitstream/handle/20.500.11850/434697/08_SurfaceElevation_SwissAlps.zip?sequence=41&isAllowed=y"
                     )
     final_files = ["IceThickness.tif", "SwissALTI3D_r2019.tif", "swissTLM3D_TLM_GLAMOS.dbf",
-                   "swissTLM3D_TLM_BODENBEDECKUNG_ost.shp", "swissTLM3D_TLM_BODENBEDECKUNG_west.shp",
-                   "swissTLM3D_TLM_BODENBEDECKUNG_ost.dbf", "swissTLM3D_TLM_BODENBEDECKUNG_west.dbf"]
+                   "swissTLM3D_TLM_BODENBEDECKUNG_OST.shp", "swissTLM3D_TLM_BODENBEDECKUNG_WEST.shp",
+                   "swissTLM3D_TLM_BODENBEDECKUNG_OST.dbf", "swissTLM3D_TLM_BODENBEDECKUNG_WEST.dbf"]
     # download
-    sgi_dir = datadir * "alps_sgi/"
+    sgi_dir = joinpath(datadir,"alps_sgi/")
     mkpath(sgi_dir)
-    if any(.!isfile.(sgi_dir .* final_files))
-        get_all_data(datas, sgi_dir)
+    if any(.!isfile.(joinpath.(sgi_dir,final_files)))
+        get_all_data(datas,sgi_dir)
         organise_folder(sgi_dir)
     end
     # select the relevant elevation data
     geom_select(SGI_ID, name, datadir)
     extract_geodata(Float64, name, datadir)
-    return load_elevation(datadir * "alps/data_" * name * ".h5")
+    return load_elevation(joinpath(datadir,"alps/data_$(name).h5"))
 end
 
 "Move all files in one folder and remove files that are not needed."
 function organise_folder(dir)
-    files_to_move = [dir * "04_IceThickness_SwissAlps/IceThickness.tif"
-                     dir * readdir(dir * "08_SurfaceElevation_SwissAlps/")
-                     dir * "TLM_BB/" .* filter(x -> startswith(x,"swissTLM3D_TLM_BODEN") && (endswith(x,".shp") || endswith(x,".dbf")), readdir(dir*"TLM_BB/"))]
-    dirs_to_remove = dir .* filter(x->isdir(dir*x),readdir(dir))
+    files_to_move = [joinpath.(dir,"04_IceThickness_SwissAlps/IceThickness.tif")
+                     joinpath.(dir,"08_SurfaceElevation_SwissAlps/",readdir(joinpath(dir,"08_SurfaceElevation_SwissAlps/")))
+                     joinpath.(dir,"TLM_BB", filter(x->startswith(x,"swissTLM3D_TLM_BODEN") && (endswith(x,".shp") || endswith(x,".dbf")),readdir(joinpath(dir,"TLM_BB/"))))
+                     joinpath.(dir,"TLM_BB", filter(x->startswith(x,"swissTLM3D_TLM_GLAMOS") && endswith(x,".dbf"),readdir(joinpath(dir,"TLM_BB/"))))]
+    dirs_to_remove = joinpath.(dir,filter(x->isdir(dir*x),readdir(dir)))
     run(`mv $files_to_move $dir`)
     run(`rm -r $dirs_to_remove`)
     return
@@ -58,18 +59,18 @@ Select ice thickness, surface and bedrock elevation data for a given Alpine glac
 - `do_save=true`: save output to HDF5
 """
 @views function geom_select(SGI_ID::String, name::String, datadir; padding::Int=10, do_save=true)
-    if isfile(datadir * "alps/IceThick_cr0_$(name).tif") && isfile(datadir * "alps/SurfElev_cr_$(name).tif") && isfile(datadir * "alps/BedElev_cr_$(name).tif")
+    if isfile(joinpath(datadir,"alps/IceThick_cr0_$(name).tif")) && isfile(joinpath(datadir,"alps/SurfElev_cr_$(name).tif")) && isfile(joinpath(datadir,"alps/BedElev_cr_$(name).tif"))
         return
     end
 
     # find glacier ID
-    df  = DataFrame(DBFTables.Table(datadir * "alps_sgi/swissTLM3D_TLM_GLAMOS.dbf"))
-    ID  = df[in([SGI_ID]).(df.SGI),:TLM_BODENB] # and not :UUID field!
+    df = DataFrame(DBFTables.Table(joinpath(datadir,"alps_sgi/swissTLM3D_TLM_GLAMOS.dbf")))
+    ID = df[in([SGI_ID]).(df.SGI),:TLM_BODENB] # and not :UUID field!
 
     # read in global data
     print("Reading in global data... ")
-    IceThick = read(Raster(datadir * "alps_sgi/IceThickness.tif"))
-    SurfElev = read(Raster(datadir * "alps_sgi/SwissALTI3D_r2019.tif"))
+    IceThick = read(Raster(joinpath(datadir,"alps_sgi/IceThickness.tif")))
+    SurfElev = read(Raster(joinpath(datadir,"alps_sgi/SwissALTI3D_r2019.tif")))
     println("done.")
 
     count = 0
@@ -77,9 +78,9 @@ Select ice thickness, surface and bedrock elevation data for a given Alpine glac
     for id in ID
         count+=1
         # retrieve shape
-        dftable = DataFrame(Shapefile.Table(datadir * "alps_sgi/swissTLM3D_TLM_BODENBEDECKUNG_ost.shp"))
+        dftable = DataFrame(Shapefile.Table(joinpath(datadir,"alps_sgi/swissTLM3D_TLM_BODENBEDECKUNG_OST.shp")))
         if sum(in([id]).(dftable.UUID))==0
-            dftable = DataFrame(Shapefile.Table(datadir * "alps_sgi/swissTLM3D_TLM_BODENBEDECKUNG_west.shp"))
+            dftable = DataFrame(Shapefile.Table(joinpath(datadir,"alps_sgi/swissTLM3D_TLM_BODENBEDECKUNG_WEST.shp")))
         end
         shape = dftable[in([id]).(dftable.UUID),:geometry]
         # find ice thickness for polygon of interest (glacier), crop and add padding, using global data
@@ -98,10 +99,10 @@ Select ice thickness, surface and bedrock elevation data for a given Alpine glac
     print("Saving to file... ")
     # save
     if do_save
-        if isdir(datadir * "alps")==false mkdir(datadir * "alps") end
-        write(datadir * "alps/IceThick_cr0_$(name).tif", IceThick_cr0)
-        write(datadir * "alps/SurfElev_cr_$(name).tif" , SurfElev_cr )
-        write(datadir * "alps/BedElev_cr_$(name).tif"  , BedElev_cr  )
+        if isdir(joinpath(datadir,"alps"))==false mkdir(joinpath(datadir,"alps")) end
+        write(joinpath(datadir,"alps/IceThick_cr0_$(name).tif"), IceThick_cr0)
+        write(joinpath(datadir,"alps/SurfElev_cr_$(name).tif") , SurfElev_cr )
+        write(joinpath(datadir,"alps/BedElev_cr_$(name).tif")  , BedElev_cr  )
     end
     println("done.")
 
@@ -118,17 +119,18 @@ Extract geadata and return bedrock and surface elevation maps, spatial coords an
 - `dat_name::String`: name of the glacier
 """
 @views function extract_geodata(type::DataType, dat_name::String, datadir)
-    if isfile(datadir * "alps/data_$(dat_name).h5")
+    if isfile(joinpath(datadir,"alps/data_$(dat_name).h5"))
         return
     end
     println("Starting geodata extraction ...")
     println("- load the data")
-    file1     = (datadir * "alps/IceThick_cr0_$(dat_name).tif")
-    file2     = (datadir * "alps/BedElev_cr_$(dat_name).tif"  )
+    file1     = joinpath(datadir,"alps/IceThick_cr0_$(dat_name).tif")
+    file2     = joinpath(datadir,"alps/BedElev_cr_$(dat_name).tif"  )
     z_thick   = reverse(Raster(file1)[:,:], dims=2)
     z_bed     = reverse(Raster(file2)[:,:], dims=2)
     coords    = reverse(Raster(file2), dims=2)
-    (x,y)     = (getindex.(coords,1), getindex.(coords,2))
+    xy        = DimPoints(dims(coords, (X, Y)))
+    (x,y)     = (first.(xy), last.(xy))
     xmin,xmax = extrema(x)
     ymin,ymax = extrema(y)
     # center data in x,y plane
@@ -136,33 +138,33 @@ Extract geadata and return bedrock and surface elevation maps, spatial coords an
     y       .-= 0.5*(ymin + ymax)
     # TODO: a step here could be rotation of the (x,y) plane using bounding box (rotating calipers)
     # define and apply masks
-    mask                       = ones(type, size(z_thick))
-    mask[ismissing.(z_thick)] .= 0
-    z_thick[mask.==0]         .= 0
-    z_thick                    = convert(Matrix{type}, z_thick)
-    z_bed[ismissing.(z_bed)]  .= mean(my_filter(z_bed,mask))
-    z_bed                      = convert(Matrix{type}, z_bed)
+    mask2                       = ones(type, size(z_thick))
+    mask2[ismissing.(z_thick)] .= 0
+    z_thick[mask2.==0]         .= 0
+    z_thick                     = convert(Matrix{type}, z_thick)
+    z_bed[ismissing.(z_bed)]   .= mean(my_filter(z_bed,mask2))
+    z_bed                       = convert(Matrix{type}, z_bed)
     # ground data in z axis
     z_bed                    .-= minimum(z_bed)
     # ice surface elevation and average between bed and ice
     z_surf                     = z_bed .+ z_thick
     z_avg                      = z_bed .+ convert(type,0.5).*z_thick
     println("- perform least square fit")
-    αx, αy = lsq_fit(my_filter(x,mask),my_filter(y,mask),my_filter(z_avg,mask))
+    αx, αy = lsq_fit(my_filter(x,mask2),my_filter(y,mask2),my_filter(z_avg,mask2))
     # normal vector to the least-squares plane
     # rotation axis - cross product of normal vector and z-axis
     nv = [-αx  ,-αy   ,1.0]; nv ./= norm(nv)
     ax = [nv[2],-nv[1],0.0]; ax ./= norm(ax)
     # rotation matrix from rotation axis and angle
     R  = axis_angle_rotation_matrix(ax,acos(nv[3]))
-    println("- save data to $datadir alps/data_$(dat_name).h5")
-    h5open(datadir * "alps/data_$(dat_name).h5", "w") do fid
-        create_group(fid, "glacier")
-        fid["glacier/x",compress=3]      = x
-        fid["glacier/y",compress=3]      = y
-        fid["glacier/z_bed",compress=3]  = z_bed
-        fid["glacier/z_surf",compress=3] = z_surf
-        fid["glacier/R",compress=3]      = R
+    println("- save data to $(datadir)alps/data_$(dat_name).h5")
+    h5open(joinpath(datadir,"alps/data_$(dat_name).h5"),"w") do io
+        g = create_group(io, "glacier")
+        g["x",compress=3]      = x
+        g["y",compress=3]      = y
+        g["z_bed",compress=3]  = z_bed
+        g["z_surf",compress=3] = z_surf
+        g["R",compress=3]      = R
     end
     println("done.")
     return
