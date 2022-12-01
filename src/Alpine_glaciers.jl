@@ -94,15 +94,15 @@ Select ice thickness, surface and bedrock elevation data for a given Alpine glac
 
     # compute bedrock elevation
     IceThick_cr0 = replace_missing(IceThick_cr, 0.0)
-    BedElev_cr = SurfElev_cr .- IceThick_cr0
+    BedElev_cr   = SurfElev_cr .- IceThick_cr0
 
     print("Saving to file... ")
     # save
     if do_save
         if isdir(joinpath(datadir,"alps"))==false mkdir(joinpath(datadir,"alps")) end
         write(joinpath(datadir,"alps/IceThick_cr0_$(name).tif"), IceThick_cr0)
-        write(joinpath(datadir,"alps/SurfElev_cr_$(name).tif") , SurfElev_cr )
-        write(joinpath(datadir,"alps/BedElev_cr_$(name).tif")  , BedElev_cr  )
+        write(joinpath(datadir,"alps/SurfElev_cr_$(name).tif") , SurfElev_cr)
+        write(joinpath(datadir,"alps/BedElev_cr_$(name).tif")  , BedElev_cr)
     end
     println("done.")
 
@@ -126,10 +126,9 @@ Extract geadata and return bedrock and surface elevation maps, spatial coords an
     println("- load the data")
     file1     = joinpath(datadir,"alps/IceThick_cr0_$(dat_name).tif")
     file2     = joinpath(datadir,"alps/BedElev_cr_$(dat_name).tif"  )
-    z_thick   = reverse(Raster(file1)[:,:], dims=2)
-    z_bed     = reverse(Raster(file2)[:,:], dims=2)
-    coords    = reverse(Raster(file2), dims=2)
-    xy        = DimPoints(dims(coords, (X, Y)))
+    z_thick_i = reverse(Raster(file1),dims=2)
+    z_bed_i   = reverse(Raster(file2),dims=2)
+    xy        = DimPoints(dims(z_thick_i, (X, Y)))
     (x,y)     = (first.(xy), last.(xy))
     xmin,xmax = extrema(x)
     ymin,ymax = extrema(y)
@@ -138,19 +137,18 @@ Extract geadata and return bedrock and surface elevation maps, spatial coords an
     y       .-= 0.5*(ymin + ymax)
     # TODO: a step here could be rotation of the (x,y) plane using bounding box (rotating calipers)
     # define and apply masks
-    mask2                       = ones(type, size(z_thick))
-    mask2[ismissing.(z_thick)] .= 0
-    z_thick[mask2.==0]         .= 0
-    z_thick                     = convert(Matrix{type}, z_thick)
-    z_bed[ismissing.(z_bed)]   .= mean(my_filter(z_bed,mask2))
-    z_bed                       = convert(Matrix{type}, z_bed)
+    z_thick   = z_thick_i.data[:,:]
+    z_bed     = z_bed_i.data[:,:]
+    my_mask   = 1 .- (z_bed.==z_bed_i.missingval)
+    z_bed[my_mask.==0] .= mean(my_filter(z_bed,my_mask))
+    z_bed    .= reshape(z_bed,size(my_mask))
     # ground data in z axis
-    z_bed                    .-= minimum(z_bed)
+    z_bed   .-= minimum(z_bed)
     # ice surface elevation and average between bed and ice
-    z_surf                     = z_bed .+ z_thick
-    z_avg                      = z_bed .+ convert(type,0.5).*z_thick
+    z_surf    = z_bed .+ z_thick
+    z_avg     = z_bed .+ convert(type,0.5).*z_thick
     println("- perform least square fit")
-    αx, αy = lsq_fit(my_filter(x,mask2),my_filter(y,mask2),my_filter(z_avg,mask2))
+    αx, αy = lsq_fit(my_filter(x,my_mask),my_filter(y,my_mask),my_filter(z_avg,my_mask))
     # normal vector to the least-squares plane
     # rotation axis - cross product of normal vector and z-axis
     nv = [-αx  ,-αy   ,1.0]; nv ./= norm(nv)
@@ -160,11 +158,11 @@ Extract geadata and return bedrock and surface elevation maps, spatial coords an
     println("- save data to $(datadir)alps/data_$(dat_name).h5")
     h5open(joinpath(datadir,"alps/data_$(dat_name).h5"),"w") do io
         g = create_group(io, "glacier")
-        g["x",compress=3]      = x
-        g["y",compress=3]      = y
-        g["z_bed",compress=3]  = z_bed
-        g["z_surf",compress=3] = z_surf
-        g["R",compress=3]      = R
+        g["x",compress=3]      = convert.(type,x)
+        g["y",compress=3]      = convert.(type,y)
+        g["z_bed",compress=3]  = convert.(type,z_bed)
+        g["z_surf",compress=3] = convert.(type,z_surf)
+        g["R",compress=3]      = convert.(type,R)
     end
     println("done.")
     return
