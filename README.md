@@ -69,3 +69,5 @@ Readers:
 
 Download:
 - be clever on what to do with big datasets of which only a small part is used.
+- be clever to not unzip everything if not everything is needed
+  (swisstopo is such a case)

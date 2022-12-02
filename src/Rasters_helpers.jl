@@ -1,7 +1,7 @@
 # From FourDAntarcticaSubglacialRouting.jl #
 ############################################
-get_x(ra::Union{Raster,RasterStack})  = dims(ra)[1].val
-get_y(ra::Union{Raster,RasterStack})  = dims(ra)[2].val
+get_x(ra::Union{Raster,RasterStack})  = dims(ra, X).val
+get_y(ra::Union{Raster,RasterStack})  = dims(ra, Y).val
 get_dx(ra::Union{Raster,RasterStack}) = diff(get_x(ra)[1:2])[1]
 get_dy(ra::Union{Raster,RasterStack}) = diff(get_y(ra)[1:2][1:2])[1]
 
@@ -10,18 +10,26 @@ get_dy(ra::Union{Raster,RasterStack}) = diff(get_y(ra)[1:2][1:2])[1]
 
 Get an index-tuple that can be used to crop a Raster to specified x and y coordinate ranges.
 
+    ra[box...]
+
 It is really just this:
 
     (X(x[1]..x[2]), Y(y[1]..y[2]))
+
+TODO:
+- probably not the right code.  Check GeoInterface.Extent
 """
 Box(x::Tuple, y::Tuple) = (X(x[1]..x[2]), Y(y[1]..y[2]))
 
 ## Geography
 function inbox(pt, box)
-    xr,yr = val.(val.(box))
-    (xr[1]<=pt[1]<=xr[2]) && (yr[1]<=pt[2]<=yr[2])
+    xr,yr = Rasters.val.(box)
+    (xr.left<=pt[1]<=xr.right) && (yr.left<=pt[2]<=yr.right)
 end
-center(box) = sum.(val.(val.(box))).÷2
+function center(box)
+    xr,yr = Rasters.val.(box)
+    (xr.left+xr.right)/2, (yr.left+yr.right)/2
+end
 
 """
     box2cartesian(box, ra::Raster)
@@ -34,13 +42,23 @@ box2cartesian(box, ra::Raster) = CartesianIndices(Rasters.DimensionalData.Dimens
 # From FastIce.jl/GeoData #
 ###########################
 
-"Helper function to mask, trim and pad bedrock and ice thickness data given a glacier polygon."
-@views mask_trim(rasterDat, poly, pad) = trim(mask(rasterDat; with=poly); pad=pad)
+"""
+    crop_padded(ra, po, pad=0)
+
+Helper function to crop a raster `ra` to fully contain a polygon `po` plus some padding `pad`
+(units of length).  This only works for 2D (3D is ignored).
+"""
+function crop_padded(ra, po, pad=0)
+    ext = GeoInterface.extent(po)
+    # extend Extent by pad, drop Z-dim
+    ext = GeoInterface.Extent( (X=(ext.X[1]-pad, ext.X[2]+pad),
+                                Y=(ext.Y[1]-pad, ext.Y[2]+pad)) )
+    # crop
+    return crop(ra, to=ext)
+end
 
 "Filter out all values of `A` based on `mask`."
-function my_filter(A, mask)
-    return [A[i] for i in eachindex(A) if mask[i] != 0]
-end
+my_filter(A, mask) = A[mask .!= 0]
 
 """
     lsq_fit(mask, zavg, xv2, yv2)

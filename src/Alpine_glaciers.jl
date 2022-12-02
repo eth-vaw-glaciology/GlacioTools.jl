@@ -13,7 +13,7 @@ function fetch_glacier(name::String, SGI_ID::String; datadir::String)
     datas = Dict(   # Source: https://www.swisstopo.admin.ch/en/geodata/landscape/tlm3d.html#download
                     :swissTLM3D   => "https://data.geo.admin.ch/ch.swisstopo.swisstlm3d/swisstlm3d_2022-03/swisstlm3d_2022-03_2056_5728.shp.zip",
                     # Source: https://www.research-collection.ethz.ch/handle/20.500.11850/434697
-                    :icethickness => "https://www.research-collection.ethz.ch/bitstream/handle/20.500.11850/434697/04_IceThickness_SwissAlps.zip?sequence=10&isAllowed=y",
+                    :icethickness => "http s://www.research-collection.ethz.ch/bitstream/handle/20.500.11850/434697/04_IceThickness_SwissAlps.zip?sequence=10&isAllowed=y",
                     :swissalti3D  => "https://www.research-collection.ethz.ch/bitstream/handle/20.500.11850/434697/08_SurfaceElevation_SwissAlps.zip?sequence=41&isAllowed=y"
                     )
     final_files = ["IceThickness.tif", "SwissALTI3D_r2019.tif", "swissTLM3D_TLM_GLAMOS.dbf",
@@ -54,18 +54,23 @@ Select ice thickness, surface and bedrock elevation data for a given Alpine glac
 - `name::String`: input data file
 
 # Optional keyword args
-- `padding::Int=10`: padding around the glacier geometry
+- `padding=100`: padding around the glacier geometry in meters
 - `do_vis=true`: do visualisation
 - `do_save=true`: save output to HDF5
 """
-@views function geom_select(SGI_ID::String, name::String, datadir; padding::Int=10, do_save=true)
+@views function geom_select(SGI_ID::String, name::String, datadir; padding=100, do_save=true)
     if isfile(joinpath(datadir,"alps/IceThick_cr0_$(name).tif")) && isfile(joinpath(datadir,"alps/SurfElev_cr_$(name).tif")) && isfile(joinpath(datadir,"alps/BedElev_cr_$(name).tif"))
         return
     end
 
-    # find glacier ID
+    # find glacier ID: there might be several polygons belonging to the same glacier
     df = DataFrame(DBFTables.Table(joinpath(datadir,"alps_sgi/swissTLM3D_TLM_GLAMOS.dbf")))
     ID = df[in([SGI_ID]).(df.SGI),:TLM_BODENB] # and not :UUID field!
+
+    ##m3: alternative not needing DataFrames
+    # dt = DBFTables.Table(joinpath(datadir,"alps_sgi/swissTLM3D_TLM_GLAMOS.dbf"))
+    # inds = findall(dt.SGI .== SGI_ID)
+    # IDs = dt.TLM_BODENB[inds]
 
     # read in global data
     print("Reading in global data... ")
@@ -82,9 +87,9 @@ Select ice thickness, surface and bedrock elevation data for a given Alpine glac
         if sum(in([id]).(dftable.UUID))==0
             dftable = DataFrame(Shapefile.Table(joinpath(datadir,"alps_sgi/swissTLM3D_TLM_BODENBEDECKUNG_WEST.shp")))
         end
-        shape = dftable[in([id]).(dftable.UUID),:geometry]
+        shape = dftable[in([id]).(dftable.UUID),:geometry][1] #m3: does shape need to be a Vector?
         # find ice thickness for polygon of interest (glacier), crop and add padding, using global data
-        IceThick_stack .= push!(IceThick_stack, mask_trim(IceThick, shape, padding))
+        push!(IceThick_stack, GlacioTools.crop_padded(IceThick, shape, padding))
     end
 
     IceThick_cr = mosaic(first, IceThick_stack)
