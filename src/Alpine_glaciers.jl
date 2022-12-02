@@ -38,7 +38,7 @@ function organise_folder(dir)
                      joinpath.(dir,"08_SurfaceElevation_SwissAlps/",readdir(joinpath(dir,"08_SurfaceElevation_SwissAlps/")))
                      joinpath.(dir,"TLM_BB", filter(x->startswith(x,"swissTLM3D_TLM_BODEN") && (endswith(x,".shp") || endswith(x,".dbf")),readdir(joinpath(dir,"TLM_BB/"))))
                      joinpath.(dir,"TLM_BB", filter(x->startswith(x,"swissTLM3D_TLM_GLAMOS") && endswith(x,".dbf"),readdir(joinpath(dir,"TLM_BB/"))))]
-    dirs_to_remove = joinpath.(dir,filter(x->isdir(dir*x),readdir(dir)))
+    dirs_to_remove = joinpath.(dir,filter(x->isdir(joinpath(dir, x)),readdir(dir)))
     run(`mv $files_to_move $dir`)
     run(`rm -r $dirs_to_remove`)
     return
