@@ -41,7 +41,3 @@ end
     @test isdir(joinpath(tmpdir, "zip-folder"))
     @test isfile(joinpath(tmpdir, "zip-folder/data_PlaineMorte.h5")) && isfile(joinpath(tmpdir, "zip-folder/test.jld2"))
 end
-
-    # test the fetch_glacier routine without download
-    # a = fetch_glacier("PlaineMorte","A55f/03",datadir="test/testfiles/")
-    # @test size(a.x) == (531,257)
