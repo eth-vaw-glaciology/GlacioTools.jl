@@ -65,7 +65,7 @@ function read_bedmachine(datadir, thin=1)
         if k==:errbed # this is {Missing, Int16}
             ga = replace_missing(ga, -9999)
             data = convert(Matrix{Float32}, ga.data)
-            ga = replace_missing(Raster(data; ga.dims, ga.name, ga.refdims, ga.metadata, missingval=-9999), NaN)
+            ga = replace_missing(Raster(data; ga.dims, ga.name, ga.refdims, metadata=Rasters.metadata(ga), missingval=-9999), NaN)
         end
 
         ga = if k==:bed || k==:surface || k==:firn
@@ -89,7 +89,7 @@ function read_bedmachine(datadir, thin=1)
     # make dims a range:
     x, y = dims(gas[1])
 
-    return RasterStack(gas..., metadata=nc.metadata, dims=(x, y)), nc
+    return RasterStack(gas..., metadata=Rasters.metadata(nc), dims=(x, y)), nc
 end
 
 function read_bedmap2(datadir)
