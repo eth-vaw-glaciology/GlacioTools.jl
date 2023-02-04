@@ -28,6 +28,14 @@ datas = Dict(:bedmachine => "https://n5eil01u.ecs.nsidc.org/MEASURES/NSIDC-0756.
                                                         ]],
              :gls_measures => ["https://n5eil01u.ecs.nsidc.org/MEASURES/NSIDC-0709.002/1992.02.07/GroundingLine_Antarctica_v02.shp",
                                "https://n5eil01u.ecs.nsidc.org/MEASURES/NSIDC-0709.002/1992.02.07/GroundingLine_Antarctica_v02.dbf"],
+             :basins_measures => ["https://n5eil01u.ecs.nsidc.org/MEASURES/NSIDC-0709.002/1992.02.07/Basins_Antarctica_v02.shp",
+                                  "https://n5eil01u.ecs.nsidc.org/MEASURES/NSIDC-0709.002/1992.02.07/Basins_Antarctica_v02.dbf",
+                                  "https://n5eil01u.ecs.nsidc.org/MEASURES/NSIDC-0709.002/1992.02.07/Basins_Antarctica_v02.shx",
+                                  "https://n5eil01u.ecs.nsidc.org/MEASURES/NSIDC-0709.002/1992.02.07/Basins_Antarctica_v02.prj"],
+             :basins_IMBIE => ["https://n5eil01u.ecs.nsidc.org/MEASURES/NSIDC-0709.002/1992.02.07/Basins_IMBIE_Antarctica_v02.shp",
+                                  "https://n5eil01u.ecs.nsidc.org/MEASURES/NSIDC-0709.002/1992.02.07/Basins_IMBIE_Antarctica_v02.dbf",
+                                  "https://n5eil01u.ecs.nsidc.org/MEASURES/NSIDC-0709.002/1992.02.07/Basins_IMBIE_Antarctica_v02.shx",
+                                  "https://n5eil01u.ecs.nsidc.org/MEASURES/NSIDC-0709.002/1992.02.07/Basins_IMBIE_Antarctica_v02.prj"],
              :modis_moa2009 => ["https://daacdata.apps.nsidc.org/pub/DATASETS/nsidc0593_moa2009_v02/geotiff/moa125_2009_hp1_v02.0.tif.gz"]
              )
 
@@ -136,6 +144,8 @@ function read_gl_measures(datadir)
     geoms = Shapefile.shapes(Shapefile.Table(datadir * "/GroundingLine_Antarctica_v02.shp"))
     return hcat([round.(Int,i) for i in GeoInterface.coordinates.(geoms)[1][639][1]]...)
 end
+
+
 
 ## 4D Antarctica datasets
 #########################
