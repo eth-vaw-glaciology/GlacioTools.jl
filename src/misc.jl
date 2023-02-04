@@ -1,4 +1,3 @@
-
 """
     get_plot_extent(p)
 
@@ -89,4 +88,28 @@ function smooth_surface_add_stack(ra::RasterStack, icethicknesses; minwindow=0)
     ss = smooth_surface(ra, icethicknesses; minwindow=minwindow)
     # recreate geostack
     return Rasters.DimensionalData.rebuild_from_arrays(ra, (;NamedTuple(ra)..., surface=ss, surface_rough=ra[:surface]))
+end
+
+using GeometryBasics: Point2
+"""
+    signed_distance(p::Point2{T}, poly::AbstractVector{Point2{T}}) where {T}
+
+Returns the distance of a point `p` to the polygon `poly`.
+"""
+function signed_distance(p::Point2, poly::AbstractVector{<:Point2})
+    d = dot(p - poly[1], p - poly[1])
+    s = 1.0
+    j = length(poly)
+    for i in eachindex(poly)
+        e = poly[j] - poly[i]
+        w = p - poly[i]
+        b = w - e .* clamp(dot(w, e) / dot(e, e), 0.0, 1.0)
+        d = min(d, dot(b, b))
+        c = p[2] >= poly[i][2], p[2] < poly[j][2], e[1] * w[2] > e[2] * w[1]
+        if all(c) || all(.!c)
+            s = -s
+        end
+        j = i
+    end
+    return s * sqrt(d)
 end

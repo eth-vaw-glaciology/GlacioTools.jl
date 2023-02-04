@@ -41,3 +41,11 @@ end
     @test isdir(joinpath(tmpdir, "zip-folder"))
     @test isfile(joinpath(tmpdir, "zip-folder/data_PlaineMorte.h5")) && isfile(joinpath(tmpdir, "zip-folder/test.jld2"))
 end
+@testset begin "signed_distance"
+    Point2 = GlacioTools.Point2
+    p = Point2(1,1)
+    poly = [Point2(0,0), Point2(0,2), Point2(2,2), Point2(2,0)]
+    @test GlacioTools.signed_distance(p, poly)==-1
+    p = Point2(1,0.5)
+    @test GlacioTools.signed_distance(p, poly)==-0.5
+end
