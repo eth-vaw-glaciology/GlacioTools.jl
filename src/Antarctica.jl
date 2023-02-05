@@ -64,7 +64,15 @@ function fetch_antarctica(datasets=nothing; datadir="data/antarctica", kws...)
     return
 end
 
-function read_bedmachine(datadir, thin=1)
+"""
+    read_bedmachine(datadir, thin=1; make_rmask=true, make_groundingline=true)
+
+Reads the BedMachine Antractica dataset.
+
+Also, by default, creates a routing mask and a mask of points just
+land-wards of the routing mask.
+"""
+function read_bedmachine(datadir, thin=1; make_rmask=true, make_groundingline=true)
     nc = RasterStack(datadir * "/BedMachineAntarctica_2020-07-15_v02.nc")
     gas = []
     for k in [:bed, :errbed, :surface, :firn, :source, :mask]
@@ -86,11 +94,28 @@ function read_bedmachine(datadir, thin=1)
         end
         push!(gas, ga)
 
-        if k==:mask
+        if k==:mask && make_rmask
             # Add mask where (sub)glacial water should be routed/flowing:
             # grounded ice or lake Vostok or ice-free-land
             rmask = (ga.==2) .| (ga.==4) .| (ga.==1);
             push!(gas, Raster(rmask, name=:rmask))
+
+            # make a mask which has all routing-points bordering on non-routing points
+            # i.e. in a loose sense the grounding-line
+            if make_groundingline
+                groudingline = rmask .* false
+                for IJ in CartesianIndices(rmask)
+                    rmask[IJ]==false && continue # don't process water-points
+                    for ij in iterate_D9(IJ, rmask)
+                        ij==IJ && continue # don't process the point itself
+                        if rmask[ij]==false # found water
+                            groudingline[IJ] = true
+                            continue
+                        end
+                    end
+                end
+                push!(gas, Raster(groudingline, name=:groundingline))
+            end
         end
     end
 
@@ -142,6 +167,12 @@ end
 function read_gl_measures(datadir)
     # these are points
     geoms = Shapefile.shapes(Shapefile.Table(datadir * "/GroundingLine_Antarctica_v02.shp"))
+    return hcat([round.(Int,i) for i in GeoInterface.coordinates.(geoms)[1][639][1]]...)
+end
+
+function read_basins_measures(datadir)
+    # these are points
+    geoms = Shapefile.shapes(Shapefile.Table(datadir * "/Basins_Antarctica_v02.shp"))
     return hcat([round.(Int,i) for i in GeoInterface.coordinates.(geoms)[1][639][1]]...)
 end
 

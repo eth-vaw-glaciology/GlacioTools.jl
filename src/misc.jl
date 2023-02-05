@@ -91,12 +91,16 @@ function smooth_surface_add_stack(ra::RasterStack, icethicknesses; minwindow=0)
 end
 
 using GeometryBasics: Point2
+
 """
     signed_distance(p::Point2{T}, poly::AbstractVector{Point2{T}}) where {T}
 
 Returns the distance of a point `p` to the polygon `poly`.
 """
 function signed_distance(p::Point2, poly::AbstractVector{<:Point2})
+    if poly[1]==poly[end]
+        poly = poly[1:end-1]
+    end
     d = dot(p - poly[1], p - poly[1])
     s = 1.0
     j = length(poly)
@@ -112,4 +116,31 @@ function signed_distance(p::Point2, poly::AbstractVector{<:Point2})
         j = i
     end
     return s * sqrt(d)
+end
+
+# from WhereTheWaterFlows
+"Return CartesianIndices corresponding to the 8 neighbors and the point itself."
+function iterate_D9(I::CartesianIndex, ar::AbstractMatrix)
+    R = CartesianIndices(ar)
+    I1, Iend = first(R), last(R)
+    return max(I1, I-I1):min(Iend, I+I1)
+end
+
+"Return CartesianIndices corresponding to the 4 non-diagional neighbors and the point itself."
+function iterate_D5(I::CartesianIndex, ar::AbstractMatrix)
+    # TODO: this is pretty slow, about 5x slower than iterate_D9
+    i, j = Tuple(I)
+    R = CartesianIndices(ar)
+    I1, Iend = first(R), last(R)
+
+    out = ()
+    for it in (CartesianIndex(i-1,j),
+               CartesianIndex(i+1,j),
+               CartesianIndex(i,j-1),
+               CartesianIndex(i,j+1))
+        if it in max(I1, I-I1):min(Iend, I+I1)
+            out = (it, out...)
+        end
+    end
+    return out
 end
