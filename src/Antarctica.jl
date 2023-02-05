@@ -172,10 +172,42 @@ function read_gl_measures(datadir)
     return hcat([round.(Int,i) for i in GeoInterface.coordinates.(geoms)[1][639][1]]...)
 end
 
+"Catchment boundaries as defined by the IMBIE folks"
 function read_basins_measures(datadir)
     # these are points
-    geoms = Shapefile.shapes(Shapefile.Table(datadir * "/Basins_Antarctica_v02.shp"))
-    return hcat([round.(Int,i) for i in GeoInterface.coordinates.(geoms)[1][639][1]]...)
+    tab = Shapefile.Table(datadir * "/Basins_Antarctica_v02.shp")
+    #geoms = Shapefile.shapes(Shapefile.Table(datadir * "/Basins_Antarctica_v02.shp"))
+
+    basins = Dict(), Any[]
+    for (id, row) in enumerate(tab)
+        # the islands are the only multi-poly basin, just skip it
+        row.NAME=="Islands" && continue
+        geom = Shapefile.shape(row)
+
+        basins[1][row.NAME] = Any[id, row.NAME, geom]
+        push!(basins[2], Any[id, row.NAME, geom])
+
+    end
+    return basins
+end
+
+"Catchment boundaries as used for the IMBIE study"
+function read_basins_IMBIE(datadir)
+    # these are points
+    tab = Shapefile.Table(datadir * "/Basins_IMBIE_Antarctica_v02.shp")
+    #geoms = Shapefile.shapes(Shapefile.Table(datadir * "/Basins_Antarctica_v02.shp"))
+
+    basins = Dict(), Any[]
+    for (id, row) in enumerate(tab)
+        # the islands are the only multi-poly basin, just skip it
+        ismissing(row.NAME) && continue
+        geom = Shapefile.shape(row)
+
+        basins[1][row.NAME] = Any[id, row.NAME, geom]
+        push!(basins[2], Any[id, row.NAME, geom])
+
+    end
+    return basins
 end
 
 

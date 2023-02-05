@@ -133,7 +133,7 @@ function iterate_D5(I::CartesianIndex, ar::AbstractMatrix)
     R = CartesianIndices(ar)
     I1, Iend = first(R), last(R)
 
-    out = ()
+    out = (CartesianIndex(i,j), )
     for it in (CartesianIndex(i-1,j),
                CartesianIndex(i+1,j),
                CartesianIndex(i,j-1),
