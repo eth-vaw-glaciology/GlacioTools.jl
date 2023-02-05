@@ -71,3 +71,33 @@ Download:
 - be clever on what to do with big datasets of which only a small part is used.
 - be clever to not unzip everything if not everything is needed
   (swisstopo is such a case)
+
+## Side notes
+
+### Raster data as point or area data -- and -- as center coordinates
+
+Raster data comes in two flavours, GDAL calls them Pixel-Is-Point or
+Pixel-Is-Area.  To add to the confusion these two terms mix (1)
+whether the data should be considered areal data or point data and (2)
+how the coordinate system is defined (the former point to cell centres
+whereas the latter to one of the edges of a pixel).  This can lead to
+half a pixel offset.
+
+In my opinion, madness lies in Pixel-Is-Area (not because of the area
+interpretation but because of the half-cell coordinate offset) and any
+data coming in as such should be converted to Pixel-Is-Point.
+
+We need to make sure to be consistent there.
+
+Rasters.jl and DimensionalData.jl can do either:
+https://rafaqz.github.io/DimensionalData.jl/stable/api/#Sampling and
+also disentangles the two concepts GDAL mixes.  We want all data
+`DimensionalData.Dimensions.LookupArrays.Points` (which automatically
+means that it is "center" coordinates).
+
+
+Refs:
+- https://www.ncei.noaa.gov/products/grid-cell-registration
+- https://github.com/opengeospatial/coverage-implementation-schema/issues/6#issuecomment-768532086
+- https://trac.osgeo.org/geotiff/wiki/RefiningGeoTIFF
+- https://github.com/opengeospatial/ogcapi-coverages/issues/92
