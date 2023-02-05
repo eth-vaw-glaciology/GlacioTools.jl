@@ -74,6 +74,8 @@ land-wards of the routing mask.
 """
 function read_bedmachine(datadir, thin=1; make_rmask=true, make_groundingline=true)
     nc = RasterStack(datadir * "/BedMachineAntarctica_2020-07-15_v02.nc")
+    assert_Point(nc)
+
     gas = []
     for k in [:bed, :errbed, :surface, :firn, :source, :mask]
         ga = nc[k]
@@ -122,7 +124,7 @@ function read_bedmachine(datadir, thin=1; make_rmask=true, make_groundingline=tr
     # make dims a range:
     x, y = dims(gas[1])
 
-    return RasterStack(gas..., metadata=Rasters.metadata(nc), dims=(x, y)), nc
+    return assert_Point(RasterStack(gas..., metadata=Rasters.metadata(nc), dims=(x, y))), nc
 end
 
 function read_bedmap2(datadir)
@@ -141,8 +143,8 @@ function read_bedmap2(datadir)
     dx = Int(step(x)); @assert step(y)==dx
     mod = x.val
     mod = Projected(;mod.order, mod.span, sampling=Rasters.DimensionalData.Dimensions.LookupArrays.Points(), mod.crs, mod.mappedcrs)
-    D = (X(Int(x[1])+500:dx:round(Int,x[end])+500, mode=mod, metadata=metadata(x)),
-         Y(Int(y[1])+500:dx:round(Int,y[end])+500, mode=mod, metadata=metadata(y)))
+    D = (X(Int(x[1])+500:dx:round(Int,x[end])+500, mode=mod, metadata=Rasters.metadata(x)),
+         Y(Int(y[1])+500:dx:round(Int,y[end])+500, mode=mod, metadata=Rasters.metadata(y)))
     @assert D[1].val .- 500==round.(Int, x.val) && D[2].val .- 500 == round.(Int, y.val)
 
     return RasterStack((;ga...), dims=D)[box_antarctica...]
