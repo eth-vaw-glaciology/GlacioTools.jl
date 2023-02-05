@@ -121,7 +121,7 @@ function load_elevation(path::AbstractString)
     return DataElevation(x,y,z_bed,z_surf,R)
 end
 
-"Assert that the sampling of a raster is `Points`, see README.  Returns ra."
+"Assert that the sampling of a raster is `Points`, see README.  Returns the raster."
 function assert_Point(ra::Union{AbstractRaster, AbstractRasterStack})
     out = all(isa.(DimensionalData.Dimensions.LookupArrays.sampling(ra),
                      DimensionalData.Dimensions.LookupArrays.Points))

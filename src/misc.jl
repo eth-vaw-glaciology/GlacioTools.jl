@@ -144,3 +144,31 @@ function iterate_D5(I::CartesianIndex, ar::AbstractMatrix)
     end
     return out
 end
+
+
+"""
+    mask_contiguous(mask, IJ, out=mask .* false)
+
+Create a new mask which marks all points connected to IJ and
+where each masked point has the same value as mask[IJ]
+"""
+function mask_contiguous(mask, IJ, out=similar(mask, Bool).*false )
+    val = mask[IJ]
+    queue = [IJ]
+    out[IJ] = true
+    while length(queue)>0
+        # get first element
+        IJ = popfirst!(queue)
+        # push onto queue
+        for ij in iterate_D9(IJ, out)
+            out[ij] && continue # already done or queued
+            if mask[ij]==val
+                out[ij] = true
+                push!(queue, ij) # queue new point
+            end
+        end
+        # make sure it does not blow up
+        length(queue)>prod(size(mask)) && error("oh no, queue got too big")
+    end
+    return out
+end
