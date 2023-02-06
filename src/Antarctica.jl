@@ -73,8 +73,9 @@ Also, by default, creates a routing mask and a mask of points just
 land-wards of the routing mask.
 """
 function read_bedmachine(datadir, thin=1; nc=nothing)
+    crs = Rasters.GeoFormatTypes.EPSG(3031) # not picked up from the nc-file
     if nc===nothing
-        nc = RasterStack(datadir * "/BedMachineAntarctica_2020-07-15_v02.nc")
+        nc = RasterStack(datadir * "/BedMachineAntarctica_2020-07-15_v02.nc", crs=crs)
     end
     assert_Point(nc)
 
@@ -102,7 +103,8 @@ function read_bedmachine(datadir, thin=1; nc=nothing)
     # make dims a range:
     x, y = dims(gas[1])
 
-    return assert_Point(RasterStack(gas..., metadata=Rasters.metadata(nc), dims=(x, y))), nc
+    return assert_Point(RasterStack(gas..., metadata=Rasters.metadata(nc), dims=(x, y),
+                                    crs=crs )), nc
 end
 
 function read_bedmap2(datadir)
@@ -125,6 +127,7 @@ function read_bedmap2(datadir)
          Y(Int(y[1])+500:dx:round(Int,y[end])+500, mode=mod, metadata=Rasters.metadata(y)))
     @assert D[1].val .- 500==round.(Int, x.val) && D[2].val .- 500 == round.(Int, y.val)
 
+    # TODO: set(A, X => Points)
     return RasterStack((;ga...), dims=D)[box_antarctica...]
 end
 
