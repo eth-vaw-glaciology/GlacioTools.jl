@@ -195,3 +195,24 @@ function get_boudary_cells(mask, value)
     end
     return out
 end
+
+"""
+     dilate(img::AbstractArray{<:Bool})
+
+Image processing "dilation", in short, makes regions of "true" larger by a pixel;
+opposite of "erosion".
+https://juliaimages.org/stable/examples/image_morphology/image_morphology/#Dilation
+"""
+function dilate(img::AbstractArray{<:Bool})
+    out = img .* false
+    for IJ in CartesianIndices(img)
+        # use a D9 Kernel (could/should use a D5 kernel, but my implementation is considerably slower...)
+        for ij in GT.iterate_D9(IJ, img)
+            if img[ij] # found connection
+                out[IJ] = true
+                break
+            end
+        end
+    end
+    return out
+end

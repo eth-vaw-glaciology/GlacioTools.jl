@@ -72,14 +72,16 @@ Reads the BedMachine Antractica dataset.
 Also, by default, creates a routing mask and a mask of points just
 land-wards of the routing mask.
 """
-function read_bedmachine(datadir, thin=1; make_rmask=true, make_groundingline=true)
-    nc = RasterStack(datadir * "/BedMachineAntarctica_2020-07-15_v02.nc")
+function read_bedmachine(datadir, thin=1; nc=nothing)
+    if nc===nothing
+        nc = RasterStack(datadir * "/BedMachineAntarctica_2020-07-15_v02.nc")
+    end
     assert_Point(nc)
 
     gas = []
     for k in [:bed, :errbed, :surface, :firn, :source, :mask]
         ga = nc[k]
-        ga = (reverse(ga[1:thin:end, 1:thin:end], dims=2))[box_antarctica...] # this also loads it into memory
+        ga = (reverse(ga[1:thin:end, 1:thin:end], dims=2))[box_antarctica...] # make a copy and also load it into memory
         if k==:errbed # this is {Missing, Int16}
             ga = replace_missing(ga, -9999)
             data = convert(Matrix{Float32}, ga.data)
@@ -95,20 +97,6 @@ function read_bedmachine(datadir, thin=1; make_rmask=true, make_groundingline=tr
             ga
         end
         push!(gas, ga)
-
-        if k==:mask && make_rmask
-            # Add mask where (sub)glacial water should be routed/flowing:
-            # grounded ice or lake Vostok or ice-free-land
-            rmask = (ga.==2) .| (ga.==4) .| (ga.==1);
-            push!(gas, Raster(rmask, name=:rmask))
-
-            # make a mask which has all routing-points bordering on non-routing points
-            # i.e. in a loose sense the grounding-line
-            if make_groundingline
-                groundingline = GT.get_boudary_cells(rmask, true)
-                push!(gas, Raster(groundingline, name=:groundingline))
-            end
-        end
     end
 
     # make dims a range:
