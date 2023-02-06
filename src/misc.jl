@@ -147,10 +147,11 @@ end
 
 
 """
-    mask_contiguous(mask, IJ, out=mask .* false)
+    mask_contiguous(mask, IJ, out=similar(mask, Bool).*false )
 
-Create a new mask which marks all points connected to IJ and
-where each masked point has the same value as mask[IJ]
+Create a new mask (or update the optional 3rd argument) which
+- marks all points connected to IJ and
+- where each masked point has the same value as mask[IJ]
 """
 function mask_contiguous(mask, IJ, out=similar(mask, Bool).*false )
     val = mask[IJ]
@@ -169,6 +170,28 @@ function mask_contiguous(mask, IJ, out=similar(mask, Bool).*false )
         end
         # make sure it does not blow up
         length(queue)>prod(size(mask)) && error("oh no, queue got too big")
+    end
+    return out
+end
+
+"""
+    get_boudary_cells(mask, value)
+
+Get all the cells of mask of value `value` which border
+on cells of different value.
+"""
+function get_boudary_cells(mask, value)
+    out = similar(mask, Bool) .* false
+
+    for IJ in CartesianIndices(mask)
+        mask[IJ]!=value && continue # don't process
+        for ij in iterate_D9(IJ, mask)
+            ij==IJ && continue # don't process the point itself
+            if mask[ij]!=value # found the boundary
+                out[IJ] = true
+                continue
+            end
+        end
     end
     return out
 end

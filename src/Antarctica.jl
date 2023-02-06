@@ -105,18 +105,8 @@ function read_bedmachine(datadir, thin=1; make_rmask=true, make_groundingline=tr
             # make a mask which has all routing-points bordering on non-routing points
             # i.e. in a loose sense the grounding-line
             if make_groundingline
-                groudingline = rmask .* false
-                for IJ in CartesianIndices(rmask)
-                    rmask[IJ]==false && continue # don't process water-points
-                    for ij in iterate_D9(IJ, rmask)
-                        ij==IJ && continue # don't process the point itself
-                        if rmask[ij]==false # found water
-                            groudingline[IJ] = true
-                            continue
-                        end
-                    end
-                end
-                push!(gas, Raster(groudingline, name=:groundingline))
+                groundingline = GT.get_boudary_cells(rmask, true)
+                push!(gas, Raster(groundingline, name=:groundingline))
             end
         end
     end
