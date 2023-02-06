@@ -122,9 +122,20 @@ end
 "Return CartesianIndices corresponding to the 8 neighbors and the point itself."
 function iterate_D9(I::CartesianIndex, ar::AbstractMatrix)
     R = CartesianIndices(ar)
+    one = CartesianIndex(1,1)
     I1, Iend = first(R), last(R)
-    return max(I1, I-I1):min(Iend, I+I1)
+    return max(I1, I-one):min(Iend, I+one)
 end
+
+# from WhereTheWaterFlows
+"Return CartesianIndices corresponding to the 24 neighbors and the point itself."
+function iterate_D25(I::CartesianIndex, ar::AbstractMatrix)
+    R = CartesianIndices(ar)
+    two = CartesianIndex(2,2)
+    I1, Iend = first(R), last(R)
+    return max(I1, I-two):min(Iend, I+two)
+end
+
 
 "Return CartesianIndices corresponding to the 4 non-diagional neighbors and the point itself."
 function iterate_D5(I::CartesianIndex, ar::AbstractMatrix)
@@ -207,7 +218,7 @@ function dilate(img::AbstractArray{<:Bool})
     out = img .* false
     for IJ in CartesianIndices(img)
         # use a D9 Kernel (could/should use a D5 kernel, but my implementation is considerably slower...)
-        for ij in GT.iterate_D9(IJ, img)
+        for ij in iterate_D9(IJ, img)
             if img[ij] # found connection
                 out[IJ] = true
                 break
