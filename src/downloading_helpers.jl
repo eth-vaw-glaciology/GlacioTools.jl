@@ -40,9 +40,10 @@ function download_file(url::String, datadir::String;
     @assert rstrip(datadir, '/') == dirname(destination_file)
     if isfile(destination_file) && !force_download
         # do nothing
-        # print(" ... already downloaded ... ")
+        print(" ... already downloaded ... ")
     elseif isfile(destination_file)
         rm(destination_file)
+        print(" ... downloading ... ")
         Downloads.download(url, destination_file)
 
         # if startswith(url, "file://")
@@ -110,7 +111,7 @@ function get_all_data(datas::Dict, datadir::String;
                 fl = download_file(d, datadir; force_download)
                 preproc && preproc_data(fl, datadir)
             catch e
-                    println("\n error in get_all_data (1): $e" )
+                println("\n error in get_all_data (1): $e" )
             end
         elseif d isa Vector
             for dd in d

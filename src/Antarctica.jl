@@ -8,17 +8,10 @@ const box_antarctica = Box((-2750000, 2780000+1), (-2200000, 2300000+1))
 const crs = EPSG(3031)
 const crs_latlon = EPSG(4326)
 
-
 vaw_url = "https://people.ee.ethz.ch/~werderm/4d-data-9xWArBUYVr/"
-datas = Dict(:bedmachine => "https://n5eil01u.ecs.nsidc.org/MEASURES/NSIDC-0756.002/1970.01.01/BedMachineAntarctica_2020-07-15_v02.nc",   # requires password, i.e. .netrc file
-             #:rema100 => "http://data.pgc.umn.edu/elev/dem/setsm/REMA/mosaic/v1.1/100m/REMA_100m_dem.tif",
-             :basal_amery_2km => vaw_url * "goldberg/Amery_basal_melt/Amery_basal_melt_2km.mat",
+datas = Dict(:basal_amery_2km => vaw_url * "goldberg/Amery_basal_melt/Amery_basal_melt_2km.mat",
              :basal_amery_5km => vaw_url * "goldberg/Amery_basal_melt/Amery_basal_melt_5km.mat",
-             :bedmap2 => ["https://secure.antarctica.ac.uk/data/bedmap2/bedmap2_tiff.zip",
-                          "https://secure.antarctica.ac.uk/data/bedmap2/bedmap2_readme.txt"],
-             :lebrocq_flux => "ftp://ftp.quantarctica.npolar.no/Quantarctica3/Glaciology/Subglacial%20Water%20Flux/SubglacialWaterFlux_Modelled_1km.tif",
-             :lakes_WrightSiegert => ["ftp://ftp.quantarctica.npolar.no/Quantarctica3/Glaciology/Subglacial%20Lakes/SubglacialLakes_WrightSiegert.shp",
-                                      "ftp://ftp.quantarctica.npolar.no/Quantarctica3/Glaciology/Subglacial%20Lakes/SubglacialLakes_WrightSiegert.dbf"],
+             :basal_melt_4D_Martos  => vaw_url * "goldberg/Antarctica_basal_melt_Martos.nc",
              :lakes_amery_hogg => vaw_url * "hogg/annas-lakes.tar.gz",
              :lakes_thwaites_malczyk => "https://4d-antarctica.org/wp-content/uploads/2021/01/Malczyk_etal_2020_data_v2.tar",
              :glads_amery_dow => [vaw_url * a for a in ["dow/gridded-outputs/Amery_ch_dis_hc_grid.csv",
@@ -26,6 +19,15 @@ datas = Dict(:bedmachine => "https://n5eil01u.ecs.nsidc.org/MEASURES/NSIDC-0756.
                                                         "dow/gridded-outputs/Amery_X.csv",
                                                         "dow/gridded-outputs/Amery_Y.csv",
                                                         ]],
+             #
+             :bedmachine => "https://n5eil01u.ecs.nsidc.org/MEASURES/NSIDC-0756.002/1970.01.01/BedMachineAntarctica_2020-07-15_v02.nc",   # requires password, i.e. .netrc file
+             #:rema100 => "http://data.pgc.umn.edu/elev/dem/setsm/REMA/mosaic/v1.1/100m/REMA_100m_dem.tif",
+             :basal_melt_4D_Shen  => vaw_url * "goldberg/Antarctica_basal_melt_Shen.nc",
+             :bedmap2 => ["https://secure.antarctica.ac.uk/data/bedmap2/bedmap2_tiff.zip",
+                          "https://secure.antarctica.ac.uk/data/bedmap2/bedmap2_readme.txt"],
+             :lebrocq_flux => "ftp://ftp.quantarctica.npolar.no/Quantarctica3/Glaciology/Subglacial%20Water%20Flux/SubglacialWaterFlux_Modelled_1km.tif",
+             :lakes_WrightSiegert => ["ftp://ftp.quantarctica.npolar.no/Quantarctica3/Glaciology/Subglacial%20Lakes/SubglacialLakes_WrightSiegert.shp",
+                                      "ftp://ftp.quantarctica.npolar.no/Quantarctica3/Glaciology/Subglacial%20Lakes/SubglacialLakes_WrightSiegert.dbf"],
              :gls_measures => ["https://n5eil01u.ecs.nsidc.org/MEASURES/NSIDC-0709.002/1992.02.07/GroundingLine_Antarctica_v02.shp",
                                "https://n5eil01u.ecs.nsidc.org/MEASURES/NSIDC-0709.002/1992.02.07/GroundingLine_Antarctica_v02.dbf"],
              :basins_measures => ["https://n5eil01u.ecs.nsidc.org/MEASURES/NSIDC-0709.002/1992.02.07/Basins_Antarctica_v02.shp",
@@ -41,7 +43,7 @@ datas = Dict(:bedmachine => "https://n5eil01u.ecs.nsidc.org/MEASURES/NSIDC-0756.
 
 
 """
-    fetch_antarctica(keys=nothing; datadir="data/antarctica")
+    fetch_antarctica(keys=nothing; datadir="data/antarctica", kws...)
 
 Download Antarctica data.  If only parts of the `GlacioTools.datas` should be downloaded,
 then specify the keys in `datasets`.
@@ -75,7 +77,7 @@ land-wards of the routing mask.
 function read_bedmachine(datadir, thin=1; nc=nothing)
     crs = Rasters.GeoFormatTypes.EPSG(3031) # not picked up from the nc-file
     if nc===nothing
-        nc = RasterStack(datadir * "/BedMachineAntarctica_2020-07-15_v02.nc", crs=crs)
+        nc = RasterStack(datadir * "/BedMachineAntarctica_2020-07-15_v02.nc")
     end
     assert_Point(nc)
 
@@ -83,10 +85,19 @@ function read_bedmachine(datadir, thin=1; nc=nothing)
     for k in [:bed, :errbed, :surface, :firn, :source, :mask]
         ga = nc[k]
         ga = (reverse(ga[1:thin:end, 1:thin:end], dims=2))[box_antarctica...] # make a copy and also load it into memory
+
+        x,y = dims(ga)
+        dx = x[2]-x[1]
+        x = X(x[1]:dx:x[end])
+        dy = y[2]-y[1]
+        y = Y(y[1]:dy:y[end])
+
         if k==:errbed # this is {Missing, Int16}
             ga = replace_missing(ga, -9999)
             data = convert(Matrix{Float32}, ga.data)
-            ga = replace_missing(Raster(data; ga.dims, ga.name, ga.refdims, metadata=Rasters.metadata(ga), missingval=-9999), NaN)
+            ga = replace_missing(Raster(data; dims=(x,y), crs=crs, ga.name, ga.refdims, metadata=Rasters.metadata(ga), missingval=-9999), NaN)
+        else
+            ga = Raster(ga.data; dims=(x,y), crs=crs, ga.name, ga.refdims, metadata=Rasters.metadata(ga))
         end
 
         ga = if k==:bed || k==:surface || k==:firn
@@ -195,7 +206,6 @@ end
 
 ## 4D Antarctica datasets
 #########################
-
 """
     read_basal_melt_amery(D, datadir)
 
@@ -269,4 +279,26 @@ function read_glads_dow(datadir)
     glads_lc = Raster(dat, name=:glads_lc, dims=(xx,yy)) # convert to m/s
 
     return (glads_lc=glads_lc, glads_hc=glads_hc)
+end
+
+function read_basal_melt_4D(datadir)
+    crs = Rasters.GeoFormatTypes.EPSG(3031) # not picked up from the nc-file
+
+    ncm = RasterStack(datadir * "//Antarctica_basal_melt_Martos.nc", crs=crs)
+    ncs = RasterStack(datadir * "//Antarctica_basal_melt_Shen.nc", crs=crs)
+
+    x =  Int32.(getproperty(ncm, Symbol("X_coord_(m)")).data[1,:][:])
+    dx = x[2]-x[1]
+    x = X(x[1]:dx:x[end])
+    y =  Int32.(getproperty(ncm, Symbol("Y_coord_(m)")).data[:,1][:])
+    dy = y[2]-y[1]
+    y = Y(y[1]:dy:y[end])
+
+    melt_martos = Float32.(getproperty(ncm, Symbol("Melt_rate_(m_yr^(-1))"))[:,:])
+    melt_martos = Raster((melt_martos')[:,:], dims=(x,y), missingval=NaN, crs=crs, name=:melt_martos)
+
+    melt_shen = Float32.(getproperty(ncs, Symbol("Melt_rate_(m_yr^(-1))"))[:,:])
+    melt_shen = Raster((melt_shen')[:,:], dims=(x,y), missingval=NaN, crs=crs, name=:melt_shen)
+
+    return assert_Point(RasterStack(melt_shen, melt_martos))
 end
