@@ -38,21 +38,41 @@ Translates a coordinate box into CartesianIndices.
 """
 box2cartesian(box, ra::Raster) = CartesianIndices(Rasters.DimensionalData.Dimensions.dims2indices(ra, box))
 
-function our_resample(raster; method=:bilinear, to)
-    dd = dims(to)[1]
-    crs = dd.val.crs
-    out = resample(raster; to, method)
+"""
+    fix_GDAL_reversing_dims(raster; crs=dims(raster)[1].val.crs )
+
+When an raster is processed by GDAL, it seems to like to switch the order of the Y-dim
+and potentially add a Band-dim.  This tries to fix this.
+
+Optionally pass in a `crs`
+"""
+function fix_GDAL_reversing_dims(raster; crs=dims(raster)[1].val.crs )
     # if a dim is reversed then re-reverse it
     # https://github.com/rafaqz/Rasters.jl/issues/385
-    x,y = dims(out)
+    x,y = dims(raster)
     if y.val.order==DimensionalData.Dimensions.LookupArrays.ReverseOrdered()
         y = Y(LinRange(y[end],y[1], length(y)))
     else
         y = Y(LinRange(y[1],y[end], length(y)))
     end
     x = X(LinRange(x[1],x[end], length(x)))
-    out = Raster(reverse(out.data,dims=2), (x,y); crs=crs, raster.name, raster.refdims, metadata=Rasters.metadata(raster))
-    return out
+    return Raster(reverse(raster.data[:,:],dims=2), (x,y); crs=crs, raster.name, raster.refdims, metadata=Rasters.metadata(raster))
+end
+
+function our_resample(raster; method=:bilinear, to, crs=dims(raster)[1].val.crs )
+    out = resample(raster; to, method)
+    return fix_GDAL_reversing_dims(out; crs)
+    # if a dim is reversed then re-reverse it
+    # https://github.com/rafaqz/Rasters.jl/issues/385
+    # x,y = dims(out)
+    # if y.val.order==DimensionalData.Dimensions.LookupArrays.ReverseOrdered()
+    #     y = Y(LinRange(y[end],y[1], length(y)))
+    # else
+    #     y = Y(LinRange(y[1],y[end], length(y)))
+    # end
+    # x = X(LinRange(x[1],x[end], length(x)))
+    # out = Raster(reverse(out.data,dims=2), (x,y); crs=crs, raster.name, raster.refdims, metadata=Rasters.metadata(raster))
+    # return out
 end
 
 # From FastIce.jl/GeoData #
