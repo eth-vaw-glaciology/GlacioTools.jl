@@ -13,10 +13,10 @@ function fetch_glacier(name::String, SGI_ID::String; datadir::String)
     datas = Dict(   # Source: https://www.swisstopo.admin.ch/en/geodata/landscape/tlm3d.html#download
                     :swissTLM3D   => "https://data.geo.admin.ch/ch.swisstopo.swisstlm3d/swisstlm3d_2022-03/swisstlm3d_2022-03_2056_5728.shp.zip",
                     # Source: https://www.research-collection.ethz.ch/handle/20.500.11850/434697
-                    :icethickness => "https://www.research-collection.ethz.ch/bitstream/handle/20.500.11850/434697/04_IceThickness_SwissAlps.zip?sequence=10&isAllowed=y",
+                    :glacierbed   => "https://www.research-collection.ethz.ch/bitstream/handle/20.500.11850/434697/07_GlacierBed_SwissAlps.zip?sequence=16&isAllowed=y",
                     :swissalti3D  => "https://www.research-collection.ethz.ch/bitstream/handle/20.500.11850/434697/08_SurfaceElevation_SwissAlps.zip?sequence=41&isAllowed=y"
                     )
-    final_files = ["IceThickness.tif", "SwissALTI3D_r2019.tif", "swissTLM3D_TLM_GLAMOS.dbf",
+    final_files = [#="IceThickness.tif", =#"GlacierBed.tif", "SwissALTI3D_r2019.tif", "swissTLM3D_TLM_GLAMOS.dbf",
                    "swissTLM3D_TLM_BODENBEDECKUNG_OST.shp", "swissTLM3D_TLM_BODENBEDECKUNG_WEST.shp",
                    "swissTLM3D_TLM_BODENBEDECKUNG_OST.dbf", "swissTLM3D_TLM_BODENBEDECKUNG_WEST.dbf"]
     # download
@@ -34,7 +34,7 @@ end
 
 "Move all files in one folder and remove files that are not needed."
 function organise_folder(dir)
-    files_to_move = [joinpath.(dir,"04_IceThickness_SwissAlps/IceThickness.tif")
+    files_to_move = [joinpath.(dir,"07_GlacierBed_SwissAlps/GlacierBed.tif")
                      joinpath.(dir,"08_SurfaceElevation_SwissAlps/",readdir(joinpath(dir,"08_SurfaceElevation_SwissAlps/")))
                      joinpath.(dir,"TLM_BB", filter(x->startswith(x,"swissTLM3D_TLM_BODEN") && (endswith(x,".shp") || endswith(x,".dbf")),readdir(joinpath(dir,"TLM_BB/"))))
                      joinpath.(dir,"TLM_BB", filter(x->startswith(x,"swissTLM3D_TLM_GLAMOS") && endswith(x,".dbf"),readdir(joinpath(dir,"TLM_BB/"))))]
@@ -59,7 +59,7 @@ Select ice thickness, surface and bedrock elevation data for a given Alpine glac
 - `do_save=true`: save output to HDF5
 """
 @views function geom_select(SGI_ID::String, name::String, datadir; padding=100, do_save=true)
-    if isfile(joinpath(datadir,"alps/IceThick_cr0_$(name).tif")) && isfile(joinpath(datadir,"alps/SurfElev_cr_$(name).tif")) && isfile(joinpath(datadir,"alps/BedElev_cr_$(name).tif"))
+    if isfile(joinpath(datadir,"alps/BedrElev_cr0_$(name).tif")) && isfile(joinpath(datadir,"alps/SurfElev_cr_$(name).tif")) && isfile(joinpath(datadir,"alps/IceThick_cr_$(name).tif"))
         return
     end
 
@@ -74,12 +74,12 @@ Select ice thickness, surface and bedrock elevation data for a given Alpine glac
 
     # read in global data
     print("Reading in global data... ")
-    IceThick = read(Raster(joinpath(datadir,"alps_sgi/IceThickness.tif")))
+    BedrElev = read(Raster(joinpath(datadir,"alps_sgi/GlacierBed.tif")))
     SurfElev = read(Raster(joinpath(datadir,"alps_sgi/SwissALTI3D_r2019.tif")))
     println("done.")
 
     count = 0
-    IceThick_stack = []
+    BedrElev_stack = []
     for id in ID
         count+=1
         # retrieve shape
@@ -88,30 +88,30 @@ Select ice thickness, surface and bedrock elevation data for a given Alpine glac
             dftable = DataFrame(Shapefile.Table(joinpath(datadir,"alps_sgi/swissTLM3D_TLM_BODENBEDECKUNG_WEST.shp")))
         end
         shape = dftable[in([id]).(dftable.UUID),:geometry][1] #m3: does shape need to be a Vector?
-        # find ice thickness for polygon of interest (glacier), crop and add padding, using global data
-        push!(IceThick_stack, GlacioTools.crop_padded(IceThick, shape, padding))
+        # find glacier bed elevation for polygon of interest (glacier), crop and add padding, using global data
+        push!(BedrElev_stack, GlacioTools.crop_padded(BedrElev, shape, padding))
     end
 
-    IceThick_cr = mosaic(first, IceThick_stack)
+    BedrElev_cr = mosaic(first, BedrElev_stack)
 
     # crop surface elevation to ice thickness data
-    SurfElev_cr = Rasters.crop(SurfElev; to=IceThick_cr)
+    SurfElev_cr = Rasters.crop(SurfElev; to=BedrElev_cr)
 
     # compute bedrock elevation
-    IceThick_cr0 = replace_missing(IceThick_cr, 0.0)
-    BedElev_cr   = SurfElev_cr .- IceThick_cr0
+    BedrElev_cr0 = replace_missing(BedrElev_cr, 0.0)
+    IceThick_cr  = SurfElev_cr .- BedrElev_cr0
 
     print("Saving to file... ")
     # save
     if do_save
         if isdir(joinpath(datadir,"alps"))==false mkdir(joinpath(datadir,"alps")) end
-        write(joinpath(datadir,"alps/IceThick_cr0_$(name).tif"), IceThick_cr0)
+        write(joinpath(datadir,"alps/BedrElev_cr0_$(name).tif"), BedrElev_cr0)
         write(joinpath(datadir,"alps/SurfElev_cr_$(name).tif") , SurfElev_cr)
-        write(joinpath(datadir,"alps/BedElev_cr_$(name).tif")  , BedElev_cr)
+        write(joinpath(datadir,"alps/IceThick_cr_$(name).tif") , IceThick_cr)
     end
     println("done.")
 
-    return IceThick_cr0, SurfElev_cr, BedElev_cr
+    return BedrElev_cr0, SurfElev_cr, IceThick_cr
 end
 
 """
@@ -129,8 +129,8 @@ Extract geadata and return bedrock and surface elevation maps, spatial coords an
     end
     println("Starting geodata extraction ...")
     println("- load the data")
-    file1     = joinpath(datadir,"alps/IceThick_cr0_$(dat_name).tif")
-    file2     = joinpath(datadir,"alps/BedElev_cr_$(dat_name).tif"  )
+    file1     = joinpath(datadir,"alps/IceThick_cr_$(dat_name).tif")
+    file2     = joinpath(datadir,"alps/BedrElev_cr0_$(dat_name).tif")
     z_thick_i = reverse(Raster(file1),dims=2)
     z_bed_i   = reverse(Raster(file2),dims=2)
     xy        = DimPoints(dims(z_thick_i, (X, Y)))
