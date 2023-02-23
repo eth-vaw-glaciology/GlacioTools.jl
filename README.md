@@ -48,6 +48,14 @@ SGI_IDS = Dict( "Rhone"       => "B43-03",
                 "Arolla"      => "B73-14",
                 "ArollaHaut"  => "B73-12")
 ```
+
+An alternative workflow is to first fetch the data for the entire Alps (the download step) and then select the geometry of a list of glacier given in the `SGI_IDS` dict automatically as following:
+```
+datadir = joinpath(@__DIR__,"mydata/")
+fetch_data(datadir)
+data = geom_select.(keys(SGI_IDS), vals(SGI_IDS), datadir);
+```
+
 The data is downloaded from:
 - [Swisstopo swissTLM3D](https://www.swisstopo.admin.ch/en/geodata/landscape/tlm3d.html#download)
 - [Grab 2020, Swiss Glacier Thickness – Release 2020 (ETH Research Collection)](https://www.research-collection.ethz.ch/handle/20.500.11850/434697) (`04_IceThickness_SwissAlps.zip` and `08_SurfaceElevation_SwissAlps.zip`)
