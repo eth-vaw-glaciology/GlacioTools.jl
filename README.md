@@ -53,7 +53,7 @@ An alternative workflow is to first fetch the data for the entire Alps (the down
 ```
 datadir = joinpath(@__DIR__,"mydata/")
 fetch_data(datadir)
-data = geom_select.(keys(SGI_IDS), vals(SGI_IDS), datadir);
+data = geom_select.(keys(SGI_IDS), values(SGI_IDS), datadir);
 ```
 
 The data is downloaded from:
