@@ -36,7 +36,7 @@ where `myusername` and `1234567` should be replaced by username and password, re
 Download and read in the bed and surface topography of a selection of alpine glaciers (with routines from [FastIce.jl/GeoData](https://github.com/PTsolvers/FastIce.jl/tree/main/GeoData)).
 ```
 SGI_ID = "B43-03"
-datadir = joinpath(@__DIR__,"../mydata/")
+datadir = joinpath(@__DIR__,"mydata/")
 data = fetch_glacier("Rhone", SGI_ID; datadir)
 ```
 where `data` is a struct with entries `x`,`y`,`z_bed`,`z_surf` and `R` (rotation matrix). The `SGI_ID` number identifies the glacier in the dataset and can be found [here](https://www.research-collection.ethz.ch/bitstream/handle/20.500.11850/434697/00_TablesIllustrations(updatedversion).pdf?sequence=39&isAllowed=y). This is an example dictionary containing the `SGI_ID`s for six selected glaciers:
