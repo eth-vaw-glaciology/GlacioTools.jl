@@ -12,6 +12,7 @@ vaw_url = "https://people.ee.ethz.ch/~werderm/4d-data-9xWArBUYVr/"
 datas = Dict(:basal_amery_2km => vaw_url * "goldberg/Amery_basal_melt/Amery_basal_melt_2km.mat",
              :basal_amery_5km => vaw_url * "goldberg/Amery_basal_melt/Amery_basal_melt_5km.mat",
              :basal_melt_4D_Martos  => vaw_url * "goldberg/Antarctica_basal_melt_Martos.nc",
+             :basal_melt_4D_Shen  => vaw_url * "goldberg/Antarctica_basal_melt_Shen.nc",
              :lakes_amery_hogg => vaw_url * "hogg/annas-lakes.tar.gz",
              :lakes_thwaites_malczyk => "https://4d-antarctica.org/wp-content/uploads/2021/01/Malczyk_etal_2020_data_v2.tar",
              :glads_amery_dow => [vaw_url * a for a in ["dow/gridded-outputs/Amery_ch_dis_hc_grid.csv",
@@ -21,8 +22,8 @@ datas = Dict(:basal_amery_2km => vaw_url * "goldberg/Amery_basal_melt/Amery_basa
                                                         ]],
              #
              :bedmachine => "https://n5eil01u.ecs.nsidc.org/MEASURES/NSIDC-0756.002/1970.01.01/BedMachineAntarctica_2020-07-15_v02.nc",   # requires password, i.e. .netrc file
+             :bedmachine_v3 => "https://n5eil01u.ecs.nsidc.org/MEASURES/NSIDC-0756.003/1970.01.01/BedMachineAntarctica-v3.nc",   # requires password, i.e. .netrc file
              #:rema100 => "http://data.pgc.umn.edu/elev/dem/setsm/REMA/mosaic/v1.1/100m/REMA_100m_dem.tif",
-             :basal_melt_4D_Shen  => vaw_url * "goldberg/Antarctica_basal_melt_Shen.nc",
              :bedmap2 => ["https://secure.antarctica.ac.uk/data/bedmap2/bedmap2_tiff.zip",
                           "https://secure.antarctica.ac.uk/data/bedmap2/bedmap2_readme.txt"],
              :lebrocq_flux => "ftp://ftp.quantarctica.npolar.no/Quantarctica3/Glaciology/Subglacial%20Water%20Flux/SubglacialWaterFlux_Modelled_1km.tif",
@@ -74,10 +75,16 @@ Reads the BedMachine Antractica dataset.
 Also, by default, creates a routing mask and a mask of points just
 land-wards of the routing mask.
 """
-function read_bedmachine(datadir, thin=1; nc=nothing)
+function read_bedmachine(datadir, thin=1; nc=nothing, version=v"3")
     crs = Rasters.GeoFormatTypes.EPSG(3031) # not picked up from the nc-file
     if nc===nothing
-        nc = RasterStack(datadir * "/BedMachineAntarctica_2020-07-15_v02.nc")
+        if version==v"2"
+            nc = RasterStack(joinpath(datadir, "BedMachineAntarctica_2020-07-15_v02.nc"))
+        elseif version==v"3"
+            nc = RasterStack(joinpath(datadir, "BedMachineAntarctica-v3.nc"))
+        else
+            error("Version $version not known")
+        end
     end
     assert_Point(nc)
 
@@ -164,7 +171,9 @@ function read_gl_measures(datadir)
     return hcat([round.(Int,i) for i in GeoInterface.coordinates.(geoms)[1][639][1]]...)
 end
 
-"Catchment boundaries as defined by the IMBIE folks"
+"""
+Catchment boundaries as defined by the IMBIE folks.  Drops the "Islands" polygons.
+"""
 function read_basins_measures(datadir)
     # these are points
     tab = Shapefile.Table(datadir * "/Basins_Antarctica_v02.shp")
