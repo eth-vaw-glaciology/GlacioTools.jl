@@ -71,7 +71,6 @@ Select ice thickness, surface and bedrock elevation data for a given Alpine glac
 
 # Optional keyword args
 - `padding=100`: padding around the glacier geometry in meters
-- `do_vis=true`: do visualisation
 - `do_save=true`: save output to HDF5
 """
 @views function geom_select(name::String, SGI_ID::String, datadir; padding=100, do_save=true)
