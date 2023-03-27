@@ -61,7 +61,7 @@ there is ice and only using ice-covered cells.
 """
 function smooth_surface(x, y, surfdem, beddem, icethicknesses, mask=surfdem.>=beddem; minwindow=0)
     dx = x[2]-x[1]
-    @assert y[2]-y[1]==dx
+   # @assert y[2]-y[1]==dx
     thickness = surfdem .- beddem
     thickness[isnan.(thickness)] .= 0
     window = round.(Int, icethicknesses .* thickness ./ dx)

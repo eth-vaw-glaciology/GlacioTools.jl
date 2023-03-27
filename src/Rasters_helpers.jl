@@ -75,6 +75,30 @@ function our_resample(raster; method=:bilinear, to, crs=dims(raster)[1].val.crs 
     # return out
 end
 
+"""
+    coords_as_ranges(raster_like; sigdigits=0)
+
+Returns
+"""
+function coords_as_ranges(raster_like; sigdigits=0)
+    x,y = dims(raster_like)
+
+    if sigdigits==0
+        x = X(LinRange(x[1], x[end], length(x)))
+        y = Y(LinRange(y[1], y[end], length(y)))
+    else
+        x = X(LinRange(round(x[1]; sigdigits), round(x[end]; sigdigits), length(x)))
+        y = Y(LinRange(round(y[1]; sigdigits), round(y[end]; sigdigits), length(y)))
+    end
+
+    dx = x[2]-x[1]
+    dy = y[2]-y[1]
+
+    @assert abs(dx)==abs(dy)  "abs(dx) and abs(dy) not equal ($dx, $dy)"
+    return x,y
+end
+
+
 # From FastIce.jl/GeoData #
 ###########################
 

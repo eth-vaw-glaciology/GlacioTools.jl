@@ -23,7 +23,8 @@ datas = Dict(:basal_amery_2km => vaw_url * "goldberg/Amery_basal_melt/Amery_basa
              #
              :bedmachine => "https://n5eil01u.ecs.nsidc.org/MEASURES/NSIDC-0756.002/1970.01.01/BedMachineAntarctica_2020-07-15_v02.nc",   # requires password, i.e. .netrc file
              :bedmachine_v3 => "https://n5eil01u.ecs.nsidc.org/MEASURES/NSIDC-0756.003/1970.01.01/BedMachineAntarctica-v3.nc",   # requires password, i.e. .netrc file
-             #:rema100 => "http://data.pgc.umn.edu/elev/dem/setsm/REMA/mosaic/v1.1/100m/REMA_100m_dem.tif",
+             :rema100 => "https://data.pgc.umn.edu/elev/dem/setsm/REMA/mosaic/v2.0/100m/rema_mosaic_100m_v2.0_filled_cop30.tar.gz",
+             :rema200 => "https://data.pgc.umn.edu/elev/dem/setsm/REMA/mosaic/v1.1/200m/REMA_200m_dem_filled.tif", # v1.1!!!
              :bedmap2 => ["https://secure.antarctica.ac.uk/data/bedmap2/bedmap2_tiff.zip",
                           "https://secure.antarctica.ac.uk/data/bedmap2/bedmap2_readme.txt"],
              :lebrocq_flux => "ftp://ftp.quantarctica.npolar.no/Quantarctica3/Glaciology/Subglacial%20Water%20Flux/SubglacialWaterFlux_Modelled_1km.tif",
@@ -149,10 +150,20 @@ function read_bedmap2(datadir)
     return RasterStack((;ga...), dims=D)[box_antarctica...]
 end
 
+function read_rema(datadir)
+    # issues:
+    # - AREA coordinates
+    # - want range for coords
+
+
+    Raster(joinpath(datadir, "REMA_200m_dem_filled.tif"))
+end
+
+
 ## Quantartica datasets
 #######################
 
-read_lebrocq_flux(datadir) = Raster(datadir * "/SubglacialWaterFlux_Modelled_1km.tif")[1:end,1:end,1]
+read_lebrocq_flux(datadir) = Raster(datadir * "/SubglacialWaterFlux_Modelled_1km.tif")
 # function read_lebrocq_flux()
 #     out = GDALarray(datadir * "/SubglacialWaterFlux_Modelled_1km.tif")[1:end,1:end,1]
 #     out[out.==-9999] .= NaN
