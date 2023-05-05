@@ -104,7 +104,8 @@ Select ice thickness, surface and bedrock elevation data for a given Alpine glac
         end
         shape = dftable[in([id]).(dftable.UUID),:geometry][1] #m3: does shape need to be a Vector?
         # find ice thickness for polygon of interest (glacier), crop and add padding, using global data
-        push!(IceThick_stack, GlacioTools.crop_padded(IceThick, shape, padding))
+        # push!(IceThick_stack, GlacioTools.crop_padded(IceThick, shape, padding)) #lr: does not correctly mask the "no ice" data.
+        push!(IceThick_stack, mask_trim(IceThick, shape; pad=padding))
     end
 
     IceThick_cr = mosaic(first, IceThick_stack)
