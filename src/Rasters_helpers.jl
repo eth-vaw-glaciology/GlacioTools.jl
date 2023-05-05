@@ -93,6 +93,14 @@ function crop_padded(ra, po, pad=0)
     return crop(ra, to=ext)
 end
 
+"""
+    mask_trim(ra, po; pad=10)
+
+Helper function to mask and trim a raster `ra` to fully contain a polygon `po` plus some
+padding `pad` (units of length).  This only works for 2D (3D is ignored).
+"""
+mask_trim(ra, po; pad=10) = trim(mask(ra; with=po); pad=pad)
+
 "Filter out all values of `A` based on `mask`."
 my_filter(A, mask) = A[mask .!= 0]
 
