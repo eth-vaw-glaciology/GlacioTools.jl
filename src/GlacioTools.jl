@@ -4,7 +4,7 @@ using Downloads, Rasters, DBFTables, DataFrames, Shapefile,
     GeoInterface, ArchGDAL, DelimitedFiles
 using Printf
 
-export get_all_data, fetch_Antarctica, fetch_glacier
+export get_all_data, fetch_Antarctica, fetch_glacier, fetch_data, geom_select, extract_geodata
 
 # define some useful constants
 const rhoi = 917

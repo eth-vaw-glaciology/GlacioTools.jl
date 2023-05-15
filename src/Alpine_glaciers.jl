@@ -10,24 +10,11 @@
 - struct of type `GlacioTools.DataElevation` with fields ``x``, ``y``, ``z_bed``, ``z_surf`` and rotation matrix ``R``
 """
 function fetch_glacier(name::String, SGI_ID::String; datadir::String)
-    datas = Dict(   # Source: https://www.swisstopo.admin.ch/en/geodata/landscape/tlm3d.html#download
-                    :swissTLM3D   => "https://data.geo.admin.ch/ch.swisstopo.swisstlm3d/swisstlm3d_2022-03/swisstlm3d_2022-03_2056_5728.shp.zip",
-                    # Source: https://www.research-collection.ethz.ch/handle/20.500.11850/434697
-                    :icethickness => "https://www.research-collection.ethz.ch/bitstream/handle/20.500.11850/434697/04_IceThickness_SwissAlps.zip?sequence=10&isAllowed=y",
-                    :swissalti3D  => "https://www.research-collection.ethz.ch/bitstream/handle/20.500.11850/434697/08_SurfaceElevation_SwissAlps.zip?sequence=41&isAllowed=y"
-                    )
-    final_files = ["IceThickness.tif", "SwissALTI3D_r2019.tif", "swissTLM3D_TLM_GLAMOS.dbf",
-                   "swissTLM3D_TLM_BODENBEDECKUNG_OST.shp", "swissTLM3D_TLM_BODENBEDECKUNG_WEST.shp",
-                   "swissTLM3D_TLM_BODENBEDECKUNG_OST.dbf", "swissTLM3D_TLM_BODENBEDECKUNG_WEST.dbf"]
-    # download
-    sgi_dir = joinpath(datadir,"alps_sgi/")
-    mkpath(sgi_dir)
-    if any(.!isfile.(joinpath.(sgi_dir,final_files)))
-        get_all_data(datas,sgi_dir)
-        organise_folder(sgi_dir)
-    end
-    # select the relevant elevation data
-    geom_select(SGI_ID, name, datadir)
+    # Download data if needed
+    fetch_data(datadir)
+    # Extract galcier and crop
+    geom_select(name, SGI_ID, datadir)
+    # Save to non-GIS format
     extract_geodata(Float64, name, datadir)
     return load_elevation(joinpath(datadir,"alps/data_$(name).h5"))
 end
@@ -45,21 +32,49 @@ function organise_folder(dir)
 end
 
 """
-    geom_select(SGI_ID::String, name::String; padding::Int=10, do_vis=true, do_save=true)
+    fetch_data(datadir::String)
+
+Fetch the data from the internet
+
+# Input
+- `datadir` -- path of the directory to store the downloaded data
+"""
+function fetch_data(datadir::String)
+    datas = Dict(   # Source: https://www.swisstopo.admin.ch/en/geodata/landscape/tlm3d.html#download
+                    :swissTLM3D   => "https://data.geo.admin.ch/ch.swisstopo.swisstlm3d/swisstlm3d_2022-03/swisstlm3d_2022-03_2056_5728.shp.zip",
+                    # Source: https://www.research-collection.ethz.ch/handle/20.500.11850/434697
+                    :icethickness => "https://www.research-collection.ethz.ch/bitstream/handle/20.500.11850/434697/04_IceThickness_SwissAlps.zip?sequence=10&isAllowed=y",
+                    :swissalti3D  => "https://www.research-collection.ethz.ch/bitstream/handle/20.500.11850/434697/08_SurfaceElevation_SwissAlps.zip?sequence=41&isAllowed=y"
+                    )
+    final_files = ["IceThickness.tif", "SwissALTI3D_r2019.tif", "swissTLM3D_TLM_GLAMOS.dbf",
+                   "swissTLM3D_TLM_BODENBEDECKUNG_OST.shp", "swissTLM3D_TLM_BODENBEDECKUNG_WEST.shp",
+                   "swissTLM3D_TLM_BODENBEDECKUNG_OST.dbf", "swissTLM3D_TLM_BODENBEDECKUNG_WEST.dbf"]
+    # download
+    sgi_dir = joinpath(datadir,"alps_sgi/")
+    mkpath(sgi_dir)
+    if any(.!isfile.(joinpath.(sgi_dir,final_files)))
+        get_all_data(datas,sgi_dir)
+        organise_folder(sgi_dir)
+    end
+    return
+end
+
+"""
+    geom_select(name::String, SGI_ID::String, datadir; padding=100, do_save=true)
 
 Select ice thickness, surface and bedrock elevation data for a given Alpine glacier based on SGI ID.
 
 # Input
-- `SGI_ID::String`: desired data type for elevation data
 - `name::String`: input data file
+- `SGI_ID::String`: desired data type for elevation data
+- `datadir` -- path of the directory to store the downloaded data
 
 # Optional keyword args
 - `padding=100`: padding around the glacier geometry in meters
-- `do_vis=true`: do visualisation
 - `do_save=true`: save output to HDF5
 """
-@views function geom_select(SGI_ID::String, name::String, datadir; padding=100, do_save=true)
-    if isfile(joinpath(datadir,"alps/IceThick_cr0_$(name).tif")) && isfile(joinpath(datadir,"alps/SurfElev_cr_$(name).tif")) && isfile(joinpath(datadir,"alps/BedElev_cr_$(name).tif"))
+@views function geom_select(name::String, SGI_ID::String, datadir; padding=100, do_save=true)
+    if isfile(joinpath(datadir,"alps/$(name)_IceThick_cr0.tif")) && isfile(joinpath(datadir,"alps/$(name)_SurfElev_cr.tif")) && isfile(joinpath(datadir,"alps/$(name)_BedElev_cr.tif"))
         return
     end
 
@@ -89,7 +104,8 @@ Select ice thickness, surface and bedrock elevation data for a given Alpine glac
         end
         shape = dftable[in([id]).(dftable.UUID),:geometry][1] #m3: does shape need to be a Vector?
         # find ice thickness for polygon of interest (glacier), crop and add padding, using global data
-        push!(IceThick_stack, GlacioTools.crop_padded(IceThick, shape, padding))
+        # push!(IceThick_stack, GlacioTools.crop_padded(IceThick, shape, padding)) #lr: does not correctly mask the "no ice" data.
+        push!(IceThick_stack, mask_trim(IceThick, shape; pad=padding))
     end
 
     IceThick_cr = mosaic(first, IceThick_stack)
@@ -105,9 +121,9 @@ Select ice thickness, surface and bedrock elevation data for a given Alpine glac
     # save
     if do_save
         if isdir(joinpath(datadir,"alps"))==false mkdir(joinpath(datadir,"alps")) end
-        write(joinpath(datadir,"alps/IceThick_cr0_$(name).tif"), IceThick_cr0)
-        write(joinpath(datadir,"alps/SurfElev_cr_$(name).tif") , SurfElev_cr)
-        write(joinpath(datadir,"alps/BedElev_cr_$(name).tif")  , BedElev_cr)
+        write(joinpath(datadir,"alps/$(name)_IceThick_cr0.tif"), IceThick_cr0)
+        write(joinpath(datadir,"alps/$(name)_SurfElev_cr.tif") , SurfElev_cr)
+        write(joinpath(datadir,"alps/$(name)_BedElev_cr.tif")  , BedElev_cr)
     end
     println("done.")
 
@@ -129,8 +145,8 @@ Extract geadata and return bedrock and surface elevation maps, spatial coords an
     end
     println("Starting geodata extraction ...")
     println("- load the data")
-    file1     = joinpath(datadir,"alps/IceThick_cr0_$(dat_name).tif")
-    file2     = joinpath(datadir,"alps/BedElev_cr_$(dat_name).tif"  )
+    file1     = joinpath(datadir,"alps/$(dat_name)_IceThick_cr0.tif")
+    file2     = joinpath(datadir,"alps/$(dat_name)_BedElev_cr.tif"  )
     z_thick_i = reverse(Raster(file1),dims=2)
     z_bed_i   = reverse(Raster(file2),dims=2)
     xy        = DimPoints(dims(z_thick_i, (X, Y)))
