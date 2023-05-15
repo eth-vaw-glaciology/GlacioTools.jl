@@ -137,9 +137,14 @@ function iterate_D25(I::CartesianIndex, ar::AbstractMatrix)
 end
 
 
-"Return CartesianIndices corresponding to the 4 non-diagional neighbors and the point itself."
+"""
+    iterate_D5(I::CartesianIndex, ar::AbstractMatrix)
+
+Return CartesianIndices corresponding to the 4 non-diagional neighbors and the point itself.
+
+TODO: this is pretty slow, about 5x slower than iterate_D9
+"""
 function iterate_D5(I::CartesianIndex, ar::AbstractMatrix)
-    # TODO: this is pretty slow, about 5x slower than iterate_D9
     i, j = Tuple(I)
     R = CartesianIndices(ar)
     I1, Iend = first(R), last(R)
@@ -217,7 +222,7 @@ https://juliaimages.org/stable/examples/image_morphology/image_morphology/#Dilat
 function dilate(img::AbstractArray{<:Bool})
     out = img .* false
     for IJ in CartesianIndices(img)
-        # use a D9 Kernel (could/should use a D5 kernel, but my implementation is considerably slower...)
+        # use a D9 Kernel as is standard
         for ij in iterate_D9(IJ, img)
             if img[ij] # found connection
                 out[IJ] = true
