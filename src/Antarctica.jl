@@ -79,10 +79,11 @@ land-wards of the routing mask.
 function read_bedmachine(datadir, thin=1; nc=nothing, version=v"3")
     crs = Rasters.GeoFormatTypes.EPSG(3031) # not picked up from the nc-file
     if nc===nothing
+        # the lazy=true is because of https://github.com/rafaqz/Rasters.jl/issues/449
         if version==v"2"
-            nc = RasterStack(joinpath(datadir, "BedMachineAntarctica_2020-07-15_v02.nc"))
+            nc = RasterStack(joinpath(datadir, "BedMachineAntarctica_2020-07-15_v02.nc"), lazy=true)
         elseif version==v"3"
-            nc = RasterStack(joinpath(datadir, "BedMachineAntarctica-v3.nc"))
+            nc = RasterStack(joinpath(datadir, "BedMachineAntarctica-v3.nc"), lazy=true)
         else
             error("Version $version not known")
         end
