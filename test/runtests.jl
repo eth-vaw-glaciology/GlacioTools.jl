@@ -1,6 +1,12 @@
 using GlacioTools, Test
 const GT = GlacioTools
 
+# Not included because it downloads tons of data:
+#include("runtest_antarctica.jl")
+
+include("runtest_misc_filereaders.jl")
+
+
 # Downloading
 ##############
 

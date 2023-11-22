@@ -18,5 +18,6 @@ include("Rasters_helpers.jl")
 include("Antarctica.jl")
 include("Alpine_glaciers.jl")
 include("misc.jl")
+include("misc-file-readers.jl")
 
 end # module
