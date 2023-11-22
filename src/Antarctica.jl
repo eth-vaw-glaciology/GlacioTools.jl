@@ -104,16 +104,16 @@ function read_bedmachine(datadir, thin=1; nc=nothing, version=v"3")
         if k==:errbed # this is {Missing, Int16}
             ga = replace_missing(ga, -9999)
             data = convert(Matrix{Float32}, ga.data)
-            ga = replace_missing(Raster(data; dims=(x,y), crs=crs, ga.name, ga.refdims, metadata=Rasters.metadata(ga), missingval=-9999), NaN)
+            ga = replace_missing(Raster(data; dims=(x,y), crs=crs, ga.name, ga.refdims, metadata=Rasters.metadata(ga), missingval=-9999), NaN32)
         else
             ga = Raster(ga.data; dims=(x,y), crs=crs, ga.name, ga.refdims, metadata=Rasters.metadata(ga))
         end
 
         ga = if k==:bed || k==:surface || k==:firn
             # remove "missing" for bed and surface
-            replace_missing(ga, NaN)
+            replace_missing(ga, NaN32)
         elseif k==:source || k==:mask
-            replace_missing(ga, -1)
+            replace_missing(ga, -one(eltype(ga)))
         else
             ga
         end
