@@ -232,3 +232,82 @@ function dilate(img::AbstractArray{<:Bool})
     end
     return out
 end
+
+
+"""
+    piecewiselinear(xs::AbstractVector, ys::AbstractVector)
+
+Return a piecewise linear function `f(x) -> y`` through points (xs,ys).
+Extrapolation with x<xs[1]->ys[1] and for x>xs[end] -> ys[end] .
+
+Notes:
+- xs needs monotonic, i.e. to be sorted in ascending or decending order
+- when length(xs)==1, then it returns a constant function.
+- currently extrapolates using the last value. (TODO)
+
+Almost 2x faster than using Interpolations.jl.
+"""
+function piecewiselinear(xs::AbstractVector, ys::AbstractVector)
+    if length(xs)==1
+        @assert length(xs)==length(ys)
+        return xq -> ys[1]
+    end
+    rats = diff(ys)./diff(xs)
+    if issorted(xs)
+        return function (xq)
+            # xq<xs[1] && error("cannot extrapolate")
+            # xq>xs[end] && error("cannot extrapolate")
+            # xq==xs[end] && return ys[end]
+            xq<=xs[1] && return ys[1]
+            xq>=xs[end] && return ys[end]
+            ii = searchsortedlast(xs, xq)
+            out = ys[ii] - (xs[ii]-xq)*rats[ii]
+            return out
+        end
+    elseif issorted(xs, Base.Order.Reverse)
+        return function (xq)
+            # xq>xs[1] && error("cannot extrapolate")
+            # xq<xs[end] && error("cannot extrapolate")
+            # xq==xs[end] && return ys[end]
+            xq>=xs[1] && return ys[1]
+            xq<=xs[end] && return ys[end]
+            ii = searchsortedlast(xs, xq, Base.Order.Reverse)
+            out = ys[ii] - (xs[ii]-xq)*rats[ii]
+            return out
+        end
+    else
+        error("xs must be sorted")
+    end
+end
+
+"""
+    parameterized_curve(x,y)
+
+Return curve-length parameterized curve-function and
+length range.
+
+Note:
+- only works for monotonic `x`!
+
+TODO: make it work for non-monotoic `x``.
+
+Example
+```
+julia> x,y = [1,2,3], [6, 11, 2];
+
+julia> pf, span = parameterized_curve(x,y);
+
+julia> xy = hcat(pf.(r)...); plot(xy[1,:], xy[2,:])
+````
+"""
+function parameterized_curve(x,y)
+    # TODO: make dimension agnostic sometime
+    pathlength = zeros(typeof(x[1]), length(x)-1) # assume all same datatype
+    for c in (x,y)
+        pathlength .+= diff(c).^2
+    end
+    pathlength = [0, cumsum(sqrt.(pathlength))...]
+    fx = piecewiselinear(pathlength, x)
+    fy = piecewiselinear(pathlength, y)
+    return pl -> [fx(pl), fy(pl)], (0, pathlength[end])
+end
