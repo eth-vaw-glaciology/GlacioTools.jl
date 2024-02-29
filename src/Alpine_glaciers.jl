@@ -164,7 +164,8 @@ Extract geadata and return bedrock and surface elevation maps, spatial coords an
     z_bed[my_mask.==0] .= mean(my_filter(z_bed,my_mask))
     z_bed    .= reshape(z_bed,size(my_mask))
     # ground data in z axis
-    z_bed   .-= minimum(z_bed)
+    zmin =  minimum(z_bed)
+    z_bed   .-= zmin
     # ice surface elevation and average between bed and ice
     z_surf    = z_bed .+ z_thick
     z_avg     = z_bed .+ convert(type,0.5).*z_thick
@@ -179,11 +180,14 @@ Extract geadata and return bedrock and surface elevation maps, spatial coords an
     println("- save data to $(datadir)alps/data_$(dat_name).h5")
     h5open(joinpath(datadir,"alps/data_$(dat_name).h5"),"w") do io
         g = create_group(io, "glacier")
-        g["x",compress=3]      = convert.(type,x.data)
-        g["y",compress=3]      = convert.(type,y.data)
-        g["z_bed",compress=3]  = convert.(type,z_bed)
-        g["z_surf",compress=3] = convert.(type,z_surf)
-        g["R",compress=3]      = convert.(type,R)
+        g["x",compress=3]        = convert.(type,x.data)
+        g["y",compress=3]        = convert.(type,y.data)
+        g["z_bed",compress=3]    = convert.(type,z_bed)
+        g["z_surf",compress=3]   = convert.(type,z_surf)
+        g["x_offset",compress=3] = convert(type, 0.5*(xmin + xmax))
+        g["y_offset",compress=3] = convert(type, 0.5*(ymin + ymax))
+        g["z_offset",compress=3] = convert(type, zmin)
+        g["R",compress=3]        = convert.(type,R)
     end
     println("done.")
     return
